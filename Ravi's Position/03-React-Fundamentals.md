@@ -282,7 +282,7 @@ useEffect(() => {
 **Your angle:** Two real cases from your work:
 - **Polling:** the Jupiter Ask AI page polls a job until the answer is ready. The poll must stop in the cleanup when the user leaves or asks a new question.
 - **Streaming:** Watt chat answers stream over SSE, using the API contract you designed (a teammate's chat-kit reads the stream). An unclosed stream leaks a connection on every new question. It's the same resource leak you'd look for in backend code.
-- `[fill in: how your polling stops (clearTimeout, AbortController, a "stopped" flag) and how the stream is closed]`
+- **On the server**, a Watt stream closes on purpose at 170 seconds with a `reconnect` event, and Stop sets a flag in Redis ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). `[fill in: how the client stops polling (clearTimeout, AbortController, a "stopped" flag)]`
 
 **Likely follow-ups:** "How do you avoid an infinite loop?" (Don't set state that is also a dependency without a guard. Avoid object or function dependencies that are new on every render.) · "Why not fetch in useEffect at all?" (Q20)
 
@@ -850,7 +850,7 @@ useQuery({
 - **AMP:** the landing page went ~10s → 5s **mostly through backend work**: Redis precompute, parallel calls, entitlement fixes, Snowflake reads 13 → 3 ([S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14)). The lesson: shape the API around the screen.
 - **Time is data too:** you fixed daylight-saving bugs across Jupiter's charts, grids, and Excel exports. Power markets have 23-hour and 25-hour days, so hourly data breaks easily. `[fill in: the root cause and the fix]`
 
-**Likely follow-ups:** "Why did you poll in Jupiter but stream in Watt?" `[fill in]` · "What's a request waterfall?" · "A PnL calc takes 5 seconds. How do you keep the UI from feeling frozen?" (Skeletons, keep the previous data visible, show progress, cancel on navigation.)
+**Likely follow-ups:** "Why did you poll in Jupiter but stream in Watt?" → "Our gateway cuts every request at a fixed time. Jupiter's Ask AI came first, so a job plus polling was the safe choice. Then I built a streaming library that closes each stream before the limit and resumes from the last event ID. Jupiter moved to it in October." · "What's a request waterfall?" · "A PnL calc takes 5 seconds. How do you keep the UI from feeling frozen?" (Skeletons, keep the previous data visible, show progress, cancel on navigation.)
 
 ---
 

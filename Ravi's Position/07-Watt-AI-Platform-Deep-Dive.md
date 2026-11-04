@@ -1,87 +1,103 @@
 # 07 · Watt (AI Platform) Deep Dive
 
-[← Index](00-Index.md) · **Interview priority:** High · **Read time:** ~25 min, then draw it and say it out loud
+[← Index](00-Index.md) · **Interview priority:** High · **Read time:** ~35 min, then draw it and say it out loud
 
-> **Why this matters for this role:** Watt is a frontend-architecture story: one shell, many apps, one sign-in, and permissions that reach individual buttons. Full-stack interviewers like to dig into exactly this: how apps are loaded, how the UI knows what to show, and why hiding a button is not security. Watt is also where you wrote the most React this year, so it's your best place to show frontend depth.
+> **Why this matters for this role:** Watt is a frontend-architecture story: one shell, many apps, one sign-in, and permissions sent down to the UI. Full-stack interviewers like to dig into exactly this: how apps are loaded, how the UI knows what to show, and why hiding a button is not security. It also has your strongest full-stack story: the streaming chat API that every chat app uses.
 
-**Status:** this page has the facts from your resume, the story bank and the company-session reply #1. Fill the remaining `[fill in]` gaps from reply #2.
+**Status:** filled from the company-session replies of Nov 3 and Nov 4 (code, git history and design docs). A few `[confirm]`s remain. Message #4 to the company session asks about them.
 
 ## Primer
 
 ### Who built what (from git history)
-- **You, backend:** the entitlements-driven **app registry**, **signed short-lived bundle links**, **UI-element-level permissions** and **API-gateway routing**. You also built the **chat API contract with SSE streaming over Redis**, the cost endpoints, permission caching for entitlement changes, and per-user warehouse tokens. You wrote the specs ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)).
+- **You, backend:**
+  - the **app registry** in the entitlements service, and its design doc (12 commits)
+  - the **signed bundle links** (the signing service)
+  - the server side of **UI-element permissions** (sorting them per app)
+  - most of the **gateway policies** for the app APIs, and backend auth
+  - the **chat library**: SSE streaming over a Redis log (33 commits)
+  - the per-app token scope and **on-behalf-of token exchange** for Ask Data
+  - the app backends, and the cost endpoints
 - **You, frontend** (about 239 commits across 4 UI repos, Aug–Nov 2026):
-  - **Data Validation UI**: rules, run history, monitors, chat pages
+  - **Data Validation UI**, mostly yours
   - **Ask Data UI**: you created it
-  - **Ask Knowledge UI**, part of it: uploads, PDF citation highlighting
-  - **In the shell**: the Admin tab, plus a shared **admin-kit** package that 3 apps use for one cost-reporting page
+  - part of **Ask Knowledge**: uploads, PDF citation highlighting
+  - the **admin-kit** package (13 commits), used by 3 apps
+  - a fix in the shell's admin sections (expired links)
   - **68 of the 102** UI test files
-- **A frontend engineer:** the shell itself (scaffold, sign-in, sidebar, the entitlement-driven app list, health panel, Users & access), the shared **chat-kit** and **ui-kit** packages, and most of Ask Knowledge. chat-kit runs on **your** chat API contract.
-- **How to say it:** "I built the platform backend and the chat API, and I built two of the apps on it, Data Validation and Ask Data, plus the admin package. A frontend engineer built the shell and the shared chat and UI kits."
+- **Another engineer:**
+  - the **shell**: loader, sign-in, app list, failure screens, health checks, Users & access
+  - **ui-kit**
+  - most of **chat-kit** (10 commits to your 5)
+- **Both:** the shell contract, the package pipeline, the entitlements gateway policy.
+- **How to say it:** "I built the platform's backend: the app registry, the signed bundle links and the permission rules. I also built the streaming chat library our chat apps use. On the frontend I built Data Validation and Ask Data, and the admin package. Another engineer built the shell, ui-kit and most of chat-kit."
 
 ### Frontend stack
-React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL sign-in, hooks and Context (no state library), Recharts, Vega-Lite, Vitest + Testing Library, Datadog RUM.
+React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL (Microsoft Entra sign-in), hooks and Context (no state library), Recharts, Vega-Lite, Vitest + Testing Library, Datadog RUM.
 
 ### Facts you can use
-- Watt is BETM's **AI platform**: a **micro-frontend host**, one sign-in front door for AI apps such as Data Validation, Data Intelligence (Ask Data?) and Doc Intelligence (Ask Knowledge?). `[confirm the app names]`
-- It uses the shared entitlements service: **3–6s → ~10ms**, fail-closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)).
-- Data Intelligence cost queries went **85.6s → 8.8s** ([S4](../AI%20Engineer/13-Behavioral-Story-Bank.md#s4)).
-- Results: `[fill in: number of apps onboarded, time to add a new app, users]`
+- **4 apps** are on Watt: Doc Intelligence, Data Intelligence (Ask Data), Data Validation and Memory. `[confirm: Doc Intelligence = the Ask Knowledge UI?]`
+- **Users:** a dev/stage script grants 6 users. The production count is unknown. **Don't guess a number.** Say "an internal platform for `[fill in: which teams]`".
+- **Before Watt:** the app list was a file built into the shell. Every signed-in user saw every app, and the app bundles could be downloaded **without signing in**.
+- **Goal** (from your registry design doc): a user sees exactly the apps their AI role grants.
+- **Chat library:** 3 apps adopted it the day after it shipped. Jupiter followed a week later.
+- **AI turns take 2–5 minutes** (measured: 136–336 seconds).
+- Entitlement checks: **3–6 s → ~10 ms**, fail-closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)).
+- Data Intelligence cost queries: **85.6 s → 8.8 s** ([S4](../AI%20Engineer/13-Behavioral-Story-Bank.md#s4)).
 
-### How it probably works (confirm every step from the reply)
+### Architecture
 
 ```
- User signs in (MSAL)
-        │
- Watt shell (React 19)
-        │ 1. GET my apps
- App registry ── entitlements
-        │ 2. list of allowed apps,
-        │    each with a signed link
-        │    that expires soon
- Shell loads the app bundle
-  [fill in: dynamic import?
-   Module Federation? iframe?]
-        │ 3. app calls its API
- API gateway ── routes to app API
-        │        (checks the token
-        │         and permissions)
- App backends
+Browser: Watt shell (React, MSAL)
+  | 1. app list + signed links
+  v
+API gateway (Azure APIM)
+  |--> Entitlements svc (Redis, SQL)
+  |--> App APIs (FastAPI on AKS)
+         |--> Redis turn log
+         |--> each app's own stores
+Blob store: versioned mount.js
+  ^ 2. shell import()s the bundle
 ```
 
-1. The user signs in once. The shell asks the **registry**: "Which apps can this user use?"
-2. The registry checks **entitlements** and returns only allowed apps. Each app comes with a **signed link to its frontend bundle that expires soon**. A user without access never even downloads that app's code. `[confirm]`
-3. The shell loads the bundle and mounts the app. `[fill in: how]`
-4. Inside an app, **UI-element permissions** decide which buttons, tabs or fields to show. `[fill in: how the UI gets them]`
-5. Every API call goes through the **gateway**, and **the server checks permissions again**. The UI hides things for a clean screen. The server is the real security.
+1. The shell signs the user in with **Microsoft Entra** (MSAL).
+2. It asks the **entitlements service**, through the gateway, for the user's apps.
+3. The service checks the token, reads the user's grants from **Redis or SQL**, and returns only the allowed apps. Each app comes with a **signed link to its bundle that lasts 5 minutes**, plus its UI elements.
+4. The shell checks the link's host, then **`import()`s the bundle** and calls `mount(container, host)`. The app renders in its own **shadow root**, with its own CSS.
+5. The app calls **its own FastAPI backend** through the gateway, with a token it gets from the shell. The gateway checks the token, and **the backend checks it again**.
+6. In the background, a job runs **every 5 minutes** and points each app at its newest published version.
 
 ### The 2-minute walkthrough (use this order)
-1. **Problem** (15 sec): each AI app needed its own sign-in and permission logic. Users and developers both paid for that.
-2. **Architecture** (30 sec): draw the diagram above.
-3. **One request, end to end** (30 sec): "A trader opens Watt and clicks Data Intelligence." Registry → signed link → bundle → app → gateway → API.
-4. **One hard decision** (20 sec): why signed short-lived links, or why permissions down to UI elements.
-5. **Result** (10 sec): `[fill in]`
-6. **What you'd change** (15 sec): see Q11.
+1. **Problem** (15 sec): every user saw every app, and the app code was public. Each app also had to solve sign-in and layout again.
+2. **Architecture** (30 sec): draw the diagram.
+3. **One request** (30 sec): "A user opens Watt and clicks Data Validation." Sign-in → app list → signed link → `import()` → `mount` → API call through the gateway.
+4. **One hard problem** (30 sec): long AI answers against a gateway that cuts every request (Q11).
+5. **Result** (10 sec): 4 apps on one shell. A new app needs no shell change. 3 apps adopted the chat library the next day.
+6. **What you'd change** (15 sec): see Q14.
 
 ## Questions & answers
 
 ### Q1. What is Watt, and why did BETM need it?  `[P0]`
 **Say this first (~30 sec):**
-> "Watt is our AI platform: one front door for all our AI apps, like Data Validation, Ask Data and Ask Knowledge. Before Watt, `[fill in: each app had its own login and permission logic?]`. With Watt, users sign in once and see only the apps and features they're allowed to use. For developers, a new app plugs into the shell instead of rebuilding sign-in, navigation and permissions. I built the platform backend and the streaming chat API, and I built two of the apps on it in React."
+> "Watt is the one front door for our AI apps. Before it, the app list was a file built into the shell. Every signed-in user saw every app, and the app code could be downloaded without signing in. Now the shell signs you in once and shows only the apps your role grants. It also owns navigation, theme and telemetry, so each app team only builds its own screens. Four apps are on it today. I built the platform's backend and the streaming chat library, and two of the apps."
+
+**If they dig deeper:**
+- The 4 apps: Doc Intelligence, Data Intelligence (Ask Data), Data Validation and Memory.
+- Users: be honest. "It's internal. I don't have a production user count I'd trust."
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
-**Likely follow-ups:** "How many apps are on it?" `[fill in]` · "Walk me through the architecture." (Q2)
+**Likely follow-ups:** "Walk me through the architecture." (Q2) · "How do you add an app?" (Q3)
 
 ---
 
 ### Q2. Walk me through the architecture.  `[P0]`
 **Say this first (~30 sec):**
-> "There are four parts. A React shell, which handles sign-in, navigation and layout. An app registry, which knows every app and, using entitlements, which user can use which app. Signed, short-lived links to each app's frontend bundle, so the shell can load only the apps you're allowed to see. And an API gateway that routes each app's API calls and checks permissions on the server."
+> "The browser loads the shell, which signs in with Microsoft Entra. It calls our entitlements service through Azure API Management. That service checks the token, reads the user's grants from Redis or SQL, and returns the app list, with a short-lived signed link to each app's bundle. The shell imports the bundle from blob storage and mounts it. Each app then calls its own FastAPI backend through the same gateway."
 
 **If they dig deeper:**
 - Draw the diagram from the Primer.
-- Frontend stack: React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL, Vitest. `[fill in: gateway product, where bundles are stored]`
-- Then go one level down into an app you built: "Inside Data Validation there are four areas: rules, run history, monitors and chat." `[fill in: how its pages, routes and data fetching are organized]`
+- **Each app has its own API path** on the gateway, under one product.
+- **Backends run on AKS.** Chat apps share a **Redis turn log** (Q11).
+- **Inside one app:** Data Validation has Create Rule and Diagnose chat pages, Run history, Monitors, Capabilities, and an admin bundle (Q10).
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
 **Likely follow-ups:** "Why not one big React app?" (Q4) · "How do you add a new app?" (Q3)
@@ -90,65 +106,107 @@ React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL sign-in, hooks and 
 
 ### Q3. How does the app registry work? How do you add a new app?  `[P0]`
 **Say this first (~30 sec):**
-> "Each app has an entry in the registry: `[fill in: e.g., ID, name, icon, route, bundle location, required entitlement, API route]`. When a user opens Watt, the shell asks the registry for the user's apps. The registry filters by entitlements and returns only the allowed ones. To add an app, a team `[fill in: builds its bundle, uploads it, adds a registry entry and an entitlement]`. It takes about `[fill in]`."
+> "Each entry has a slug, label, icon, bundle link, API base URL, description, version, privilege, link expiry, UI elements and an optional admin entry. Static data lives in the service config. The live version is a database column that only one sync route writes. Access is one permission per app, granted to roles and cached in Redis. To add an app, you build its bundle, publish it to a versioned folder, add a config entry, create and grant the permission, and add its API to the gateway. The shell needs no change."
 
 **If they dig deeper:**
-- Where the registry data lives, and how it's cached: `[fill in]`
-- How a new app version is released, and how to roll back: `[fill in]`
+- **The bundle contract:** contract version 1. The bundle exports `meta` and `mount`, plus an optional `admin.js`.
+- **Releases:** bundles go to semver folders. The pipeline **refuses to overwrite** an existing version. A job runs the sync route every 5 minutes, and it points each app at its newest version.
+- **Rollback:** `[confirm: re-point the version, or publish a new patch?]`
+- **An app that isn't fully configured returns 503**, never a half-built entry. That's your rule.
+- This replaced a registry file built into the shell, where every user got every app.
 
-**Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
-**Likely follow-ups:** "What if two apps need different React versions?" (Q4)
+**Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3). You wrote the design doc and the server side. Another engineer built the shell's registry code.
+**Likely follow-ups:** "How long does it take to add an app?" `[fill in]` · "What if two apps need different React versions?" (Q4)
 
 ---
 
-### Q4. Why signed short-lived bundle links? Why not one big app, or micro-frontends?  `[P0]`
+### Q4. How does the shell load an app? Why not Module Federation or iframes?  `[P0]`
 **Say this first (~30 sec):**
-> "We wanted two things: users should never download code for an app they can't use, and each app should ship on its own. A signed link that expires in `[fill in: minutes]` means the bundle URL can't be shared or reused later. One big React app would be simpler, but every user would download every app, and every team would have to release together. `[fill in: what you compared, e.g., iframes or Module Federation, and why you chose this]`."
+> "The entitlements service signs each link with an Azure user-delegation SAS, using its own managed identity, so there's no storage key. Each link is read-only, for one file, and lasts 5 minutes. The shell checks the link's host against an allow list, preloads it, and does a plain dynamic import of that URL. Then it calls `mount` with a container and a host object. The app renders in its own shadow root. There's no Module Federation and no iframe. It's one ES module with a two-function contract."
 
 **If they dig deeper:**
-- **One app (monorepo):** simplest, shared state is easy. But one release train, and every user gets all the code.
-- **iframes:** strong isolation. But hard to share sign-in, styling and navigation, and slower.
-- **Module Federation / dynamic import of remote bundles:** independent releases and shared libraries. But more build and version complexity.
-- Know which one Watt uses and say why. `[fill in]`
+- **Why this choice:** apps don't share build config, each app ships on its own, and the shadow root keeps CSS apart. **The docs don't record a formal comparison**, so say "we chose it for simplicity". Don't claim you compared the options.
+- **Link details:** expiry is configurable from 1 to 60 minutes, and a link never outlives the 12-hour delegation key. The **admin bundle is signed only for admins**.
+- **Bundles:** gzipped, cached as immutable for a year.
+- **The options, if they ask:**
+  - **One big app:** simplest. But one release for everyone, and every user downloads every app.
+  - **iframes:** strongest isolation. But sign-in, theme and navigation are hard to share, and it's heavier.
+  - **Module Federation:** can share libraries such as React. But all apps need matching build setups.
+  - **`import()` of a URL (Watt):** simple and independent. Each bundle may carry its own copy of React. `[confirm]`
+- **How you'd write the loader in an interview** (a sketch, not the real code):
 
-**Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
-**Likely follow-ups:** "What happens if a link expires while the user is working?" (Q13) · "How do apps share React and the design system?"
+```ts
+const ORIGIN = 'https://bundles.example.net';
+
+async function loadApp(
+  entryUrl: string,
+  el: HTMLElement,
+  host: Host,
+) {
+  // Compare origins. startsWith() can be
+  // fooled by look-alike hosts.
+  if (new URL(entryUrl).origin !== ORIGIN) {
+    throw new Error('Untrusted bundle host');
+  }
+  const mod: AppModule = await import(
+    /* @vite-ignore */ entryUrl
+  );
+  mod.mount(el, host);
+}
+```
+
+- **Two details to know:** `import()` fetches modules with CORS, so the storage must allow the shell's origin. And `/* @vite-ignore */` tells Vite the URL is only known at run time.
+
+**Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3). You built the signing side. Another engineer built the loader.
+**Likely follow-ups:** "What if a link expires while the user works?" (Q13) · "Do the apps share React?" `[confirm]`
 
 ---
 
 ### Q5. How do UI-element permissions work? Isn't hiding a button insecure?  `[P0]`
 **Say this first (~30 sec):**
-> "Hiding a button is not security, and we don't treat it as security. The server checks every API call. UI permissions are for the user: they show only what someone can do, so there are no buttons that always fail. The shell gets the user's permissions `[fill in: at sign-in? per app?]`, and components check them, for example `[fill in: a <Can permission='…'> wrapper or a usePermission hook]`."
+> "Hiding a button is not security. The server is the real check. UI permissions come in the same call as the app list. My server code sorts them. A path like /app-slug means access to the app. /app-slug/something goes into that app's own list. Anything else is a shell element, like the Admin tab, with a privilege level. The shell drops any entry it can't parse, so it fails closed. Small helpers then decide things like whether to show the Admin tab."
 
 **If they dig deeper:**
-- A typed permission check in React is a clean answer if they ask for code: a `usePermission('deal.edit')` hook that reads from context.
-- Entitlement checks are fast (about 10 ms) because of the Redis-first design ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)).
-- Fail closed: if permissions can't load, show nothing extra, rather than everything.
+- Each app gets **a snapshot of its list** when it mounts.
+- **Honest gap:** no app reads its list yet. Today the shell uses these permissions (Admin tab, super admin, which apps you can manage). Say "the plumbing is there; the apps don't use it yet."
+- **On the server:** every backend checks the token. Admin routes also re-check entitlements, with a 5-minute cache per user. A permission change must be allowed for **every domain** it touches.
+- If they ask for code, a typed hook is a clean answer:
+
+```ts
+function useUiElement(name: string) {
+  const { uiElements } = useHost();
+  return uiElements.includes(name);
+}
+```
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "How do permission changes reach a user who is already logged in?" (Q13)
+**Likely follow-ups:** "If I have a token but no access to an app, can I call its API?" `[confirm: does every data route re-check app access?]` · "How does a change reach a user who is already signed in?" (Q13)
 
 ---
 
-### Q6. How does sign-in and auth work?  `[P1]`
+### Q6. How does sign-in work, and how do apps get the token?  `[P0]`
 **Say this first (~30 sec):**
-> "Users sign in through MSAL in the shell `[confirm: with Entra ID]`. The shell gets a token and sends it with every API call. The gateway validates the token and routes the call. The app's backend checks entitlements again. Apps inside the shell don't handle sign-in themselves. They get the user and token from the shell."
+> "We use Microsoft Entra through MSAL, with the redirect flow. Tokens live in session storage, so the session ends when the browser closes. A new tab tries a silent sign-in. Tokens refresh with a silent call, and fall back to a redirect. Child apps never touch MSAL. The shell passes them a host object with the user and a `getAuthToken` function. There's also a 22-hour session limit, with a warning 10 minutes before."
 
 **If they dig deeper:**
-- Where the token is stored, and how it's refreshed: `[fill in]`
-- How an app gets the token from the shell: `[fill in: React context? a shared SDK?]`
+- **The host object:** user, `getAuthToken(scopes)`, API base URL, gateway key, UI elements, theme, route and telemetry.
+- **Ask Data asks for its own token scope.** Its backend swaps the user's token for a warehouse token for that user (on-behalf-of). You built that.
+- **Local storage was tried and reverted.** It gave sign-in across tabs. `[fill in: why it was reverted]`
+- **The 22-hour clock** is in local storage, so all tabs agree. The code says it's a convenience rule, not a security boundary.
+- **"Isn't the gateway key in the browser a secret?"** No. In a browser app it can't be secret. It tells the gateway which product the call belongs to. The real check is the token, at the gateway and in every backend.
 
-**Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
-**Likely follow-ups:** "Why not store the token in localStorage?" ([05](05-Frontend-System-Design.md))
+**Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3). Another engineer built shell sign-in. The contract was shared. The per-app scope and token exchange were yours.
+**Likely follow-ups:** "Why not local storage?" · "Would you use a BFF?" ([05](05-Frontend-System-Design.md))
 
 ---
 
-### Q7. You wrote the specs the frontend engineers built from. What was in them?  `[P0]`
+### Q7. You wrote the design docs. What was in them?  `[P0]`
 **Say this first (~30 sec):**
-> "Each spec had the goal, the API contract with request and response shapes, the permission rules, the error cases, and what 'done' looks like. `[fill in: one real example, e.g., the registry response shape]`. Writing it down meant the frontend engineers could build without waiting for me, even across time zones."
+> "The registry design doc started with one goal: a user sees exactly the apps their role grants. Then the entry fields, how access is granted and cached, and the error rules. For example: an app that isn't fully configured returns 503, never a half-built entry. For the chat contract, the Python library exports JSON Schemas, and chat-kit's TypeScript types are generated from them. So the frontend and backend share one source of truth."
 
 **If they dig deeper:**
-- How you handled a spec change in the middle of the work: `[fill in]`
+- A written contract let the frontend engineer build without waiting for you.
+- How you handled a spec change mid-build: `[fill in]`
 - How you reviewed their work: `[fill in]`
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1).
@@ -158,65 +216,154 @@ React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL sign-in, hooks and 
 
 ### Q8. How did you make it fast?  `[P1]`
 **Say this first (~30 sec):**
-> "The biggest problem was permission checks. The shared entitlements service took 3–6 seconds, because of N+1 lookups. I removed them, added indexes, and made it Redis-first. Now a check takes about 10 milliseconds, for Watt and for AMP, Load Deal and Mobile too. On the frontend, `[fill in: lazy loading of app bundles, caching the registry response]`."
+> "The biggest win was permission checks. The shared entitlements service took 3 to 6 seconds, because of N+1 lookups. I removed them, added indexes, and made it Redis-first. Now a check takes about 10 milliseconds. On the frontend, the browser only gets code for the apps you're allowed to use, through dynamic import. Bundles are gzipped, cached as immutable, and preloaded."
+
+**If they dig deeper:**
+- Admin routes cache each user's entitlements for 5 minutes.
+- App health checks run every 60 seconds, **only while the tab is visible**.
 
 **Your angle:** [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "How do you invalidate the Redis cache when permissions change?"
+**Likely follow-ups:** "How do you clear the cache when permissions change?" (the admin screen clears that user's server cache; Q13)
 
 ---
 
-### Q9. Do the AI apps share UI components, like the chat window?  `[P0]`
+### Q9. How do the apps share UI code?  `[P0]`
 **Say this first (~30 sec):**
-> "Yes, there are three shared packages. **ui-kit** has the common components. **chat-kit** is the chat window every app uses. It streams answers over SSE, and it runs on the chat API contract I designed. **admin-kit** is mine: it gives 3 apps the same cost-reporting admin page, on top of cost APIs I wrote. So a new AI app gets chat, admin and styling for free."
+> "Three npm packages under a private scope on our Azure Artifacts feed. ui-kit has the header, user menu and environment badge. chat-kit has the chat client, streaming, the chat page and PDF export. admin-kit, which is mine, renders cost reports. One pipeline runs when a merge touches the packages folder. It runs tests, type checks, lint and build, and publishes only if that version isn't on the feed yet. So you release by bumping the version in your PR."
 
 **If they dig deeper:**
-- **The chat contract (yours):** `[fill in: the event types, e.g., token, citation, done, error; how a message ID ties events together; why Redis sits between the agent and the SSE endpoint]`
-- **Why SSE and not WebSockets:** the server pushes and the client only sends new questions, so one-way streaming is enough. SSE works over plain HTTP and reconnects on its own. ([05](05-Frontend-System-Design.md))
-- **How packages are shared:** `[fill in: a monorepo workspace? a private npm registry? how versions are managed]`
-- **Designing a shared package:** a small, typed API (props and hooks), no app-specific logic, and its own tests.
+- **Versions:** ui-kit 0.1.0, chat-kit 0.1.10, admin-kit 1.1.0, shell contract 1.3.0. Apps use normal semver ranges.
+- **A 0.x detail:** `^0.1.10` allows 0.1.x but not 0.2.0. In 0.x, a minor bump counts as breaking.
+- **admin-kit** renders a versioned `CostReport` JSON Schema. Every backend serves it from the same admin cost route. The UI computes shares, cost per unit and totals.
+- **chat-kit's types** are generated from the JSON Schemas your Python library exports.
 
-**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1), [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
-**Likely follow-ups:** "How would you design a shared chat component?" ([05](05-Frontend-System-Design.md)) · "How do you release a breaking change to chat-kit?"
+**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1), [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3). ui-kit: another engineer. admin-kit: you. chat-kit: both.
+**Likely follow-ups:** "How do you ship a breaking change?" (a major version; apps move when ready) · "Why not a monorepo?"
 
 ---
 
-### Q10. Walk me through an app you built on Watt: Data Validation.  `[P0]`
+### Q10. Walk me through an app you built: Data Validation.  `[P0]`
 **Say this first (~30 sec):**
-> "Data Validation checks our data pipelines' outputs against their sources and flags mismatches. I built the backend solo, and I built the React app on Watt. It has four areas. Rules, where users define checks. Run history, to see each run's results. Monitors, for scheduled checks. And chat pages `[fill in: what users ask there]`. An LLM judge separates timing races from real defects, and nothing is written without a person confirming."
+> "Data Validation checks our pipelines' outputs. It has two chat modes, Create Rule and Diagnose, plus Run history, Monitors for pipelines and datasets, a Capabilities page, and an admin bundle for the shell's Admin tab. The forms check required names, positive freshness values, and filter rows: no duplicates, at most 10. The server checks again with Pydantic and returns 422, for example for a bad cron or an unknown time zone. Run history is paged on the server, 25 at a time, with search, filters and sort."
 
 **If they dig deeper:**
-- How the rules form handles validation and errors: `[fill in]`
-- How run history handles many runs: `[fill in: paging? filters?]`
-- What your tests cover. You wrote 68 of the platform's 102 UI test files. `[fill in: examples]`
+- **Human in the loop:** a chat change needs a confirm step. The server only runs an action that **exactly matches an open proposal**. Otherwise it returns 409.
+- **Deleting a dataset still in use** returns 409, naming the suite that uses it.
+- **Cost:** each run shows its LLM cost to 4 decimals. A judge call costs about $0.0004.
+- **Routing:** a small hash router. `[confirm: so it doesn't fight the shell over the URL path?]`
+- **Tests:** 22 UI test files (~124 cases). The service has ~130 test files, and its last run passed 2,295 tests.
+- Another engineer moved the chat pages onto chat-kit in October.
 
 **Your angle:** [S2](../AI%20Engineer/13-Behavioral-Story-Bank.md#s2).
-**Likely follow-ups:** "How does the UI show that a human must confirm?" · "What did users find confusing?"
+**Likely follow-ups:** "How does the UI show that a human must confirm?" · "Why page on the server?"
 
 ---
 
-### Q11. What would you change if you built it again?  `[P0]`
-**Say this first (~30 sec):**
-> "`[fill in: your real answer]`. Good candidates: a typed SDK that apps use to get the user, token and permissions from the shell; contract tests between the shell and the apps; `[fill in]`."
+### Q11. How do you stream a 5-minute AI answer through a gateway that cuts every request?  `[P0]`
+This is your strongest full-stack story. You built it.
 
-**Likely follow-ups:** "Why didn't you do that the first time?"
+**Say this first (~30 sec):**
+> "Our AI turns take 2 to 5 minutes, but the gateway cuts every request at a fixed time, even while data is flowing. So keep-alive pings can't help, and no connection can last a whole turn. I tried plain streaming, then polling a status key. The final design: the turn runs as a background job and writes every event to a Redis log. The client reads it over SSE. Each stream closes on purpose before the limit, and the client resumes from the last event ID. Any replica can serve it."
+
+**If they dig deeper:**
+- **Start:** a POST returns the conversation, turn and message IDs at once.
+- **Events:** start, status, delta, part, final, error, reconnect, done. Each has a number that counts up within the turn.
+- **Windows:** a stream closes at **170 seconds**, under the **180-second gateway limit**, with a `reconnect` event. Pings go every 15 seconds. On dev the window is 30 seconds, to force replica handovers.
+  - `[confirm: an early test saw a cut at 61.1 seconds. Before the limit was raised, or another route?]`
+  - `[confirm: Jupiter's Ask AI uses 40-second windows. Why?]`
+- **Fallbacks:** after 5 failed reconnects, the client polls every 2 seconds. A page refresh or a second tab resumes the running turn.
+- **Stop:** a stop call sets a flag in Redis. The runner stops at its next event, saves the partial answer as stopped, then sends final and done.
+- **Safety:** keys are hashed. Values are encrypted (AES-GCM) when a secret is set. The log expires after 1 hour. A turn with no heartbeat for 30 seconds ends as lost.
+- **Why Redis Streams, not pub/sub:** pub/sub keeps no history, so a reconnecting client would miss events. A stream is an ordered log you can read from any ID.
+- **Why SSE, not WebSocket:** the server pushes and the client only asks. SSE is plain HTTP and has event IDs built in. The gateway's response buffering is off so events flow.
+- **Adoption:** Ask Data, Doc Intelligence and Data Validation moved to it the next day. Jupiter a week later.
+
+**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1), [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
+**Likely follow-ups:**
+- "EventSource can't set an Authorization header. How does the client send the token?" `[confirm: EventSource or fetch streaming?]`
+- "What if two replicas both run the same turn?"
+- "How do you test it?" (Q12)
 
 ---
 
-### Q12. How do you version the contract between the shell and the apps?  `[P2]`
+### Q12. Tell me about a production bug in that library.  `[P0]`
 **Say this first (~30 sec):**
-> "`[fill in]`. A good answer: the shell exposes a small, versioned interface to apps, for example the user, the token, permissions and navigation. Apps say which version they need in the registry. The shell supports the current and previous version during a migration."
+> "One day, every Jupiter Ask AI turn in production failed at its first event, with 'event log unavailable'. Production uses a geo-replicated Redis. It runs streams in strict ID mode, and it rejected the IDs we were setting. We shipped a hotfix the same day. Then I fixed the library and added a strict-ID fake to the tests, so this mode is now tested."
+
+**If they dig deeper:**
+- **Date:** Oct 21, 2026. The error was a 503.
+- **Why strict mode exists:** active-active Redis copies data between regions asynchronously, so IDs chosen by clients could clash. Strict mode, the default, rejects full IDs that a client sets ([Redis docs](https://redis.io/docs/latest/operate/rs/databases/active-active/develop/data-types/streams/)).
+- **The fix:** `[confirm: Redis now makes the IDs, and the turn's number moves into the event?]`
+- **Lesson:** test against the same mode as production, not only a default fake.
+- **Two more bugs you fixed:**
+  - A repair step could overwrite a turn that had just finished with an empty answer. You made it re-read the store, and now repair only touches turns still running. It's a check-then-act race.
+  - Polled events had no IDs, so clients got some events twice. You numbered every event.
+
+**Your angle:** use this for "Tell me about a production incident."
+**Likely follow-ups:** "How did you find the cause so fast?" `[fill in]` · "What alert would have caught it earlier?"
 
 ---
 
 ### Q13. What can go wrong, and how does Watt handle it?  `[P1]`
 **Say this first (~30 sec):**
-> "Three cases. If the registry is down, `[fill in: the shell shows a clear error and retries]`. If a bundle link expires while the user is working, `[fill in: the shell asks for a fresh link]`. If someone's permissions change while they are logged in, `[fill in: refresh on the next call or on a timer]`. In every case the server still checks, so the worst result is a confusing screen, not a data leak."
+> "If the app list call fails, the shell shows a clear state for each case. A 401 retries sign-in once, then says 'Sign-in required'. A 403 says 'Access denied'. A 503 or a network error says 'Apps unavailable', with Try again. If a bundle link has expired, the shell gets a fresh list once and retries, then shows 'session timed out'. If permissions change, the user sees it on the next reload. The server still checks every call."
+
+**If they dig deeper:**
+- **The server never sends an unsigned link.** It returns 503 instead. That's your rule.
+- **Health checks:** every 60 seconds while the tab is visible, with an 8-second timeout. A failure shows a red dot, a details panel and a notice bar.
+- **Permission changes:** the admin screen clears the user's server cache, but **nothing pushes the change to an open tab**. Say so if asked, and say how you'd add it (Q14).
+- **Your fix:** admin sections skip links that have already expired, and they share one refetch.
+- Another engineer built most of the shell's failure handling.
 
 **Your angle:** [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9) (fail-closed).
-**Likely follow-ups:** "How do you know when these failures happen?" (monitoring) `[fill in]`
+**Likely follow-ups:** "How do you know when these failures happen?" (health checks, Datadog RUM)
+
+---
+
+### Q14. What would you change if you built it again?  `[P0]`
+**Say this first (~30 sec):**
+> "Three things. First, push permission changes to open tabs. Today they apply on the next reload. Second, let apps use their UI-element lists through a typed hook, and make every data route re-check app access. Third, generate the shell contract types from one schema, the way chat-kit's types are generated, and add contract tests between the shell and the apps."
+
+**If they dig deeper:**
+- **Pushing changes:** send an "entitlements changed" event, or refetch on window focus and on the first 403.
+- **Write decisions down:** the docs don't record why we chose `import()` over Module Federation. A one-page decision record would help the next engineer.
+- Pick the one you believe in most. `[fill in: your real answer]`
+
+**Likely follow-ups:** "Why didn't you do that the first time?" Honest answer: get apps onto the platform first, then harden.
+
+---
+
+### Q15. How do you version the contract between the shell and the apps?  `[P2]`
+**Say this first (~30 sec):**
+> "Each bundle declares its contract version in `meta`. We're on version 1. The shell contract package is at 1.3.0. Bundles live in immutable semver folders, and the pipeline won't overwrite one. A sync job points each app at its newest version. For a breaking change, I'd have the shell support the old and new contract versions during the move."
+
+**A sketch of the contract** (not the real code):
+
+```ts
+type Host = {
+  user: { id: string; name: string };
+  getAuthToken(scopes?: string[]):
+    Promise<string>;
+  apiBaseUrl: string;
+  uiElements: string[];
+  // also: gateway key, theme, route,
+  // telemetry
+};
+
+type AppModule = {
+  meta: { contractVersion: 1 };
+  mount(el: HTMLElement, host: Host): void;
+};
+```
+
+`[confirm: does mount return an unmount function?]`
 
 ## References
 - [Story bank: S3 · Watt specs](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)
 - [Story bank: S9 · Entitlements service](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)
 - [Story bank: S4 · Data Intelligence](../AI%20Engineer/13-Behavioral-Story-Bank.md#s4)
 - [05 · Full-Stack & Frontend System Design](05-Frontend-System-Design.md): the app-shell, auth and AI-chat scenarios.
+- [Azure Storage: user delegation SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-user-delegation-sas) (Q4)
+- [MSAL.js: single sign-on](https://learn.microsoft.com/en-us/entra/identity-platform/msal-js-sso) (Q6)
+- [HTML spec: server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html), including `Last-Event-ID` (Q11)
+- [Redis: streams in Active-Active databases](https://redis.io/docs/latest/operate/rs/databases/active-active/develop/data-types/streams/): the strict ID mode (Q12)

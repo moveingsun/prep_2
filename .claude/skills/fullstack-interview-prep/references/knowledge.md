@@ -1,6 +1,6 @@
 # Knowledge record: Kurt's full-stack interview
 
-Last updated: **2026-11-03**, the session that built `Ravi's Position/`. Add new facts here with a date when they come in.
+Last updated: **2026-11-04** (Watt part of reply #2). First written 2026-11-03, the session that built `Ravi's Position/`. Add new facts here with a date when they come in.
 
 ## Contents
 1. The interview
@@ -38,7 +38,7 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - **Data Validation UI** (rules, run history, monitors, chat pages)
   - **Ask Data UI** (he created it)
   - part of **Ask Knowledge UI** (uploads, PDF citation highlighting)
-  - in the shell: the **Admin tab** and a shared **admin-kit** package used by 3 apps (one cost-reporting page)
+  - in the shell: the **Admin tab** and a shared **admin-kit** package used by 3 apps (one cost-reporting page). Reply #2 detail: admin-kit is his (13 commits); in the shell itself his commit is a fix to the admin sections (expired links). The UI-element helpers were shared work.
   - **68 of the 102** UI test files
 - **Kurt, backend:**
   - the entitlements-driven app registry
@@ -50,7 +50,7 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - permission caching for entitlement changes
   - per-user warehouse tokens
   - Kurt also wrote the specs.
-- **Another frontend engineer:** the shell itself (scaffold, sign-in, sidebar, the entitlement-driven app list, health panel, Users & access), the **chat-kit** and **ui-kit** packages, and most of Ask Knowledge.
+- **Another frontend engineer:** the shell itself (scaffold, sign-in, sidebar, the entitlement-driven app list, health panel, Users & access), **ui-kit**, **most of chat-kit** (10 commits to Kurt's 5, per reply #2), and most of Ask Knowledge.
 - **Related:** the Data Validation service (Kurt built it solo; an LLM judge triages failures, and a human confirms before any write). Data Intelligence Cortex layer: 85.6s → 8.8s.
 
 ### Jupiter: the Load Deal app
@@ -70,7 +70,7 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
 - **Another frontend engineer:** most of the other pages (about 270 commits). Kurt approved 26 of their PRs.
 - **Other stories:**
   - PnL reconciliation with the PM: 60+ discrepancies resolved, 32/32 deals matched (S8).
-  - A 10× Snowflake cost spike caused by a query/cache loop using 98% of execution time: ~100 → ~11 credits/day (S7).
+  - A 10× Snowflake cost spike caused by a cache-warming loop using 98% of execution time: ~100 → ~11 credits/day (S7). Details are in the PnL Summary bullet below.
   - Load Deal AI, built in 3 weeks: Cortex agent + semantic view, LangGraph with citation checks, a 20-question eval set (S1).
 
 ### Jupiter design details (company reply #2, Jupiter part, 2026-11-03)
@@ -102,7 +102,8 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
 - **PnL Summary performance (Kurt's): guide only, NOT on the resume** (Kurt's decision, 2026-11-03):
   - 72 async handlers were blocking the event loop. Moving that work off the loop cut p50 from 4.5–5.1 s to 3.6 s.
   - He then cached results by run identity (warm lookup 81–95 ms, never stale).
-  - He removed a cache-warming loop that used 98% of the API warehouse's run time over 7 days.
+  - A cache-warming loop used 98% of the API warehouse's run time (222.9 of 227.2 execution-hours over 7 days). That week 96 of 179 queue runs failed and 453 messages were dead-lettered. **Fix (not removal):** renew message locks, one message per deal, warm only the current and prior month.
+  - The event-loop fix: he made the 72 handlers plain `def` functions (FastAPI runs them in a thread pool).
 - **DST fix (Kurt's):**
   - Root cause: local-time conversion collapsed the two 1 AM hours on the fall-back day into one.
   - The fix keys every hourly row by date + hour-ending + EDT/EST, so a day can have 23, 24 or 25 hours, with one helper that converts the key to a fixed-offset time.
@@ -114,7 +115,8 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - A job with no heartbeat for 60 s is reported lost. Rate limit: 10 questions/min.
   - The agent uses a read-only database role and fails closed.
   - Each turn's Cortex cost is logged. History moved to server threads.
-  - In **Oct 2026** Ask AI moved to the shared chat package, which **streams in 40-second windows** and falls back to polling. The resume still says "job polling" (Kurt chose to keep it).
+  - In **Oct 2026** Ask AI moved to the shared chat package (Kurt's Watt chat library), which streams in short windows and falls back to polling. The resume still says "job polling" (Kurt chose to keep it).
+  - **Unresolved:** reply #2's Jupiter part said **40-second** windows; the Watt part says the library uses **170 s** under a 180 s gateway limit, and an early test saw a cut at **61.1 s**. The guide says "short windows" and marks `[confirm]`. Message #4 asks.
 - **Upload validation:**
   - 10 MB limit; the steps are create → validate → store raw → process.
   - Weak spots: required fields aren't enforced, the error message is generic, and a failed upload doesn't roll back the deal row.
@@ -126,6 +128,21 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - **Load deal:** a contract to serve a utility's customer load.
   - **Loads-through cutoff:** the last date with settled load in a PnL run.
   - **Whole-month basis:** the full calendar month, matching the workbook. Cash basis stops at the loads-through date.
+
+### Watt design details (company reply #2, Watt + BOTH part, 2026-11-04)
+- **Apps (4):** Doc Intelligence, Data Intelligence (Ask Data), Data Validation, Memory. Users: a dev/stage script grants 6; the production count is unknown (never guess one).
+- **Before Watt:** the app list was a build-time file; every signed-in user saw every app, and bundles were downloadable without sign-in. Goal (Kurt's registry design doc): a user sees exactly the apps their AI role grants.
+- **Flow:** shell (MSAL) → Azure APIM → entitlements service (Redis/SQL) returns allowed apps + signed bundle links + UI elements → shell `import()`s `mount.js` from blob storage → `mount(container, host)` in a shadow root → app calls its own FastAPI backend (AKS) through APIM. A job hits a sync route every 5 min to point each app at its newest version.
+- **Sign-in (shell: another engineer):** MSAL redirect flow; tokens in sessionStorage (localStorage was tried for cross-tab SSO and reverted; a new tab tries silent sign-in); silent refresh, redirect fallback; 22-hour session limit with a 10-min warning (clock in localStorage, "convenience, not security"). Child apps never touch MSAL: the host object has user, `getAuthToken(scopes)`, API base URL, gateway key, UI elements, theme, route, telemetry. **Kurt's:** Ask Data's own scope + on-behalf-of exchange for a per-user warehouse token.
+- **Registry (Kurt: design doc + server side, 12 commits):** entry = slug, label, icon, bundle link, API base URL, description, version, privilege, link expiry, UI elements, optional admin entry. Static data in service config; the live version is a DB column only the sync route writes; access = one permission per app, granted to roles, cached in Redis. Bundle contract v1: exports `meta` + `mount`, optional `admin.js`. An unconfigured app returns **503**, never a half-built entry (Kurt's rule).
+- **Signed links (Kurt's signing service):** Azure user-delegation SAS via managed identity (no storage key); read-only, one file, **5 min** default (1–60 configurable, never past the 12-hour delegation key); admin bundle signed only for admins. Bundles gzipped, immutable 1-year cache, semver folders, pipeline refuses overwrites. Shell checks the host against an allow list, preloads, `import()`s. **No Module Federation, no iframe**; no formal comparison recorded ("chosen for simplicity").
+- **UI-element permissions (Kurt: server-side sorting):** `/app-slug` = app access; `/app-slug/x` → that app's list; others = shell elements (Admin tab, manage-admins) with privilege levels. The shell parses leniently (drops bad entries). Apps get a snapshot at mount, but **no app reads its list yet**.
+- **Gateway (mostly Kurt):** APIM, one path per app under one shell product; bearer token + subscription key + product header; JWT + audience validated; CORS; response buffering off for streams. Every backend validates the token again (pods are reachable directly). Admin routes re-check entitlements (5-min per-user cache). Whether every data route re-checks app access: unsure.
+- **Chat library (Kurt, 33 commits):** POST returns conversation/turn/message IDs; the turn runs as a background job writing to a Redis Streams log; client reads SSE. Events: start, status, delta, part, final, error, reconnect, done, each numbered within the turn; reconnect replays from the last ID. Window 170 s (180 s gateway limit), pings every 15 s, dev 30 s to force handovers. After 5 failed reconnects → poll every 2 s; refresh or a 2nd tab resumes. Stop = Redis flag; runner saves the partial answer as stopped, then final + done. Keys hashed, values AES-GCM encrypted when a secret is set; log TTL 1 h; no heartbeat for 30 s → lost. Ask Data, Doc Intelligence and Data Validation adopted it the next day; Jupiter a week later. Turns measured 136–336 s.
+- **Packages:** private scope on Azure Artifacts; one pipeline (tests, type check, lint, build; publish only new versions). ui-kit 0.1.0 (another engineer), chat-kit 0.1.10 (both; types generated from the Python library's JSON Schemas), admin-kit 1.1.0 (Kurt, 13 commits; renders a versioned `CostReport` schema served by every backend), shell contract 1.3.0 (both).
+- **Data Validation UI (mostly Kurt):** Create Rule and Diagnose chat modes, Run history, Monitors (pipelines, datasets), Capabilities, admin bundle; hash router. Forms: required names, positive freshness, filter rows (no duplicates, max 10); server Pydantic 422 (bad cron, unknown time zone). Run history: server paging 25/page, search, filters, sort; unknown filter → 422. Chat actions run only if they exactly match an open proposal, else 409. Deleting a dataset in use → 409 naming the suite. LLM cost per run to 4 decimals (judge call ≈ $0.0004). 22 UI test files (~124 cases); service ~130 test files, last run 2,295 passed. Another engineer moved its chat pages onto chat-kit in Oct.
+- **Failure handling (mostly another engineer):** 401 → retry sign-in once, then "Sign-in required"; 403 "Access denied"; 503/network "Apps unavailable" + Try again; expired link → refetch once, then "session timed out". Health checks every 60 s while visible (8 s timeout). Permission changes apply on the next reload; nothing pushes to open tabs. **Kurt's:** the server-side 503 rule and the admin expired-link fix.
+- **Hardest problems (Kurt's):** (1) the gateway cutting long AI turns → the resumable streaming design; (2) production lifecycle bugs: a repair step overwrote just-finished turns (now re-reads, only touches running turns); on **2026-10-21** every Jupiter Ask AI turn failed ("event log unavailable", 503) because the production geo-replicated Redis runs streams in strict ID mode and rejected the library's IDs. Same-day hotfix, then a library fix + a strict-ID fake in tests. Polled events also lacked IDs (duplicates); now every event is numbered.
 
 ### AMP: Asset Management Platform
 - **Stack:** React 18, TypeScript, **Create React App**, **AG Grid**, ECharts, Highcharts, Chart.js, embedded Power BI, React Context, Dexie, MSAL, Datadog RUM.
@@ -170,7 +187,8 @@ Kurt's own base resume (`Resume/Kurt_Wang_Resume.pdf`, 1 page, uploaded 2026-11-
 
 ## 8. Open items
 - [x] Message #2, Jupiter part: received 2026-11-03 and applied to pages 01, 05 and 06.
-- [ ] Message #2, Watt + BOTH part (Kurt says "next" to the company session) → fill page 07.
+- [x] Message #2, Watt + BOTH part: received 2026-11-04 and applied to pages 07, 06, 05, 04, 03, 02, 01 and story S7.
+- [ ] Message #4 (the `[confirm]`s on page 07: gateway 61.1 s vs 180 s, Jupiter's 40 s window, EventSource vs fetch, shared React, data-route access checks, the strict-ID fix, rollback).
 - [ ] The company-session reply to the AG Grid message → fill `08-AG-Grid.md` (version, license, row model, features).
 - [ ] The interview date, the company and the format.
 - [ ] Kurt fixes "sole" and "20s" in his own 1-page base resume.

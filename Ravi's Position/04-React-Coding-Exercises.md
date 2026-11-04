@@ -1733,7 +1733,7 @@ export function ChatPanel() {
 - **History:** this demo sends only the new message. A real chat sends the conversation, or a conversation ID that the server uses to load memory.
 - **Testing:** mock `fetch` to return `new Response(stream)` where the stream sends "Hel" then "lo". Check that the text becomes "Hello". jsdom has no layout, so scroll checks belong in a browser test (Playwright).
 
-**Your angle:** You built the backend for the Watt AI Shell and wrote the specs the frontend engineers implemented, so you know the server side of this connection. `[fill in: did Watt stream tokens? SSE or plain chunks? How did cancel work on the server?]` See [07 · Watt AI Platform Deep Dive](07-Watt-AI-Platform-Deep-Dive.md).
+**Your angle:** You built the backend for the Watt AI Shell and wrote the specs the frontend engineers implemented, so you know the server side of this connection. Watt streams over SSE with these events: start, status, delta, part, final, error, reconnect, done. Cancel: a stop call sets a flag in Redis, and the runner stops at its next event and saves the partial answer as stopped ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). See [07 · Watt AI Platform Deep Dive](07-Watt-AI-Platform-Deep-Dive.md).
 
 **Likely follow-ups:**
 - "Regenerate the last answer." → Remove the last assistant message and call `send` again with the last user text.

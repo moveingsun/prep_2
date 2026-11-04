@@ -145,7 +145,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 - **PnL Summary is one endpoint for 17 visuals**, shaped for the screen, so the page makes one call, not seventeen.
 - Another engineer built most routers and the envelope. You wrote the PnL and Ask AI routes.
 
-**Likely follow-ups:** "Offset or cursor pagination?" · "How do you version the API?"
+**Likely follow-ups:** "Offset or cursor pagination?" · "How do you version the API?" · "Why are the TypeScript types hand-written?" → "History: they grew with each feature. I'd generate them from FastAPI's OpenAPI schema in CI, the way chat-kit already generates its types from schemas."
 
 ---
 
@@ -181,9 +181,10 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 > "PnL Summary took about 5 seconds. I measured, and the cause wasn't the database. In FastAPI, 72 async handlers were calling blocking code, so one slow call froze the whole event loop on that pod, and every request waited. I moved the blocking work off the event loop, and the median dropped from 4.5–5.1 seconds to 3.6. Then I cached each result by its run ID. A warm lookup now takes about 80 to 95 milliseconds. Because a new run means a new key, the cache is never stale."
 
 **If they dig deeper:**
-- **The concept:** an `async def` route must never call a blocking driver directly. Either use a plain `def` route (FastAPI runs it in a thread pool), or wrap the call with `run_in_threadpool` / `asyncio.to_thread`. `[fill in: which one you used]`
+- **The concept:** an `async def` route must never call a blocking driver directly. Either use a plain `def` route (FastAPI runs it in a thread pool), or wrap the call with `run_in_threadpool` / `asyncio.to_thread`. You made the 72 handlers plain `def` functions.
 - **The cache key = run identity.** Invalidation is the hard part of caching. Making the key change when the data changes removes the problem.
-- **Third fix:** a cache-warming loop used 98% of the API warehouse's run time over 7 days. You removed it (the Snowflake cost story, [S7](../AI%20Engineer/13-Behavioral-Story-Bank.md#s7)). Now the cache fills on a miss.
+- **Third fix:** a cache-warming loop used **222.9 of 227.2** execution-hours of the API warehouse over 7 days (98%). The queue was failing too: **96 of 179** runs failed that week, and **453** messages were dead-lettered. You renewed the message locks, sent one message per deal, and warmed only the current and prior month (the Snowflake cost story, [S7](../AI%20Engineer/13-Behavioral-Story-Bank.md#s7)).
+- **Why the cache can't go stale:** the key includes the PnL run ID. Refresh events only warm the cache, and empty results are never cached.
 - **This is guide-only, not on the resume.** You decided that on Nov 3. It's still a true story you can tell.
 
 **Your angle:** [S7](../AI%20Engineer/13-Behavioral-Story-Bank.md#s7), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
@@ -209,7 +210,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 
 ### Q9. Ask AI: why job + poll, and how does the chat UI work?  `[P0]`
 **Say this first (~30 sec):**
-> "My design doc ruled out streaming at first. Our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So the UI posts a question and gets a job ID. Job state is in Redis, so any pod can answer a poll. The UI polls every 2 seconds, slows to 5 after 30 seconds, and stops at 10 minutes. Answers show as Markdown with a SQL block, an AG Grid table and a Vega-Lite chart. In October I moved it to our shared chat package, which streams in 40-second windows to stay under the gateway limits, and falls back to polling."
+> "My design doc ruled out streaming at first. Our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So the UI posts a question and gets a job ID. Job state is in Redis, so any pod can answer a poll. The UI polls every 2 seconds, slows to 5 after 30 seconds, and stops at 10 minutes. Answers show as Markdown with a SQL block, an AG Grid table and a Vega-Lite chart. In October I moved it to our shared chat package, which streams in short windows, each under the gateway limit, and falls back to polling."
 
 **If they dig deeper:**
 - **Safety:**
@@ -219,6 +220,8 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
   - the agent runs under a **read-only database role** and fails closed if it can't switch roles
 - **Cost:** every turn logs its Cortex usage, and an admin endpoint reports the cost in dollars.
 - **History** moved from the browser's local storage to server threads.
+- **The shared chat package** is the Watt chat library you built: a Redis event log, SSE, and resume from the last event ID ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). Jupiter adopted it a week after the Watt apps.
+- **Window size:** the Jupiter reply said 40 seconds; Watt uses 170. `[confirm which Jupiter uses, and why]`
 - **Agents:** Snowflake Cortex with a semantic view, plus LangGraph with citation checks and a 20-question eval set ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)).
 - You built all of it.
 

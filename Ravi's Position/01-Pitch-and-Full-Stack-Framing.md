@@ -65,11 +65,11 @@
 
 ### Q3. Walk me through a feature you built end to end, from database to UI.  `[P0]`
 **Say this first (~30 sec):**
-> "The Ask AI feature on Jupiter. Traders wanted to ask questions about load deals in plain English. I built every layer. The agents use Snowflake Cortex with a semantic view, and LangGraph with citation checks. A job API takes each question, with rate limits, a read-only database role and cost tracking per turn. The React chat page sends the question, polls the job, and shows the answer as SQL, a table and a chart, with conversation history. The hard part was the network: our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So I chose a job plus polling, and later moved to streaming in 40-second windows. I built the first version in three weeks."
+> "The Ask AI feature on Jupiter. Traders wanted to ask questions about load deals in plain English. I built every layer. The agents use Snowflake Cortex with a semantic view, and LangGraph with citation checks. A job API takes each question, with rate limits, a read-only database role and cost tracking per turn. The React chat page sends the question, polls the job, and shows the answer as SQL, a table and a chart, with conversation history. The hard part was the network: our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So I chose a job plus polling. Later it moved to our shared streaming library, which resumes from the last event. I built the first version in three weeks."
 
 **If they dig deeper:**
 - Use this order: problem → data → API → UI → hard part → result.
-- **Why a job and polling, not one long request?** Long connections were cut by the gateway and the load balancer. A job also gives rate limits, cost logging and a clean "still working" state. Job state lives in Redis, so any pod can answer a poll. In October you moved Ask AI to the shared chat package, which streams in 40-second windows and falls back to polling. Full details: [06 Q9](06-Jupiter-Load-Deal-Deep-Dive.md).
+- **Why a job and polling, not one long request?** Long connections were cut by the gateway and the load balancer. A job also gives rate limits, cost logging and a clean "still working" state. Job state lives in Redis, so any pod can answer a poll. In October you moved Ask AI to the shared chat library you built for Watt. It streams in short windows, resumes from the last event ID, and falls back to polling ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). Full details: [06 Q9](06-Jupiter-Load-Deal-Deep-Dive.md).
 - **Backup example:** the Watt admin cost page. You wrote the cost APIs and a shared admin-kit package, and 3 apps now use the same page.
 - Mention loading and error states, and how you tested it (Vitest + Testing Library).
 
@@ -96,7 +96,7 @@
 > "I start with a written contract. For Watt, I wrote specs with the API shape, the permission rules and the edge cases, so the frontend engineers could build without waiting for me. When my manager left, I led a frontend engineer and two other contractors day to day. Every evening I wrote down what to build next and what 'done' meant, and every day I reviewed their PRs."
 
 **If they dig deeper:**
-- What was in a spec: endpoints, request and response types, error cases, loading states, permission rules. `[fill in: one real spec section]`
+- What was in a spec: endpoints, request and response types, error cases, loading states, permission rules. A real one: the registry design doc. Goal: a user sees exactly the apps their role grants. Rule: an app that isn't fully configured returns 503, never a half-built entry ([07 Q7](07-Watt-AI-Platform-Deep-Dive.md)).
 - How you handled a spec change mid-build. `[fill in]`
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1).

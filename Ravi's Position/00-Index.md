@@ -59,7 +59,7 @@ About **2–3 hours a day**. If the interview date moves, keep the order and shi
 - [05](05-Frontend-System-Design.md): the data-grid, dashboard and long-running-job scenarios. They are the general versions of Jupiter's design.
 
 **Day 5 · Sun 11/8: Watt deep dive**
-- [07](07-Watt-AI-Platform-Deep-Dive.md): fill in, draw it, then give the 2-minute walkthrough out loud.
+- [07](07-Watt-AI-Platform-Deep-Dive.md): draw it, then give the 2-minute walkthrough out loud. Practice Q11 and Q12 most: they're your strongest stories.
 - [05](05-Frontend-System-Design.md): the app-shell, auth and AI-chat scenarios. They are the general versions of Watt.
 - [04](04-React-Coding-Exercises.md): exercises 5–10 (pick 3).
 
@@ -76,6 +76,7 @@ About **2–3 hours a day**. If the interview date moves, keep the order and shi
 - [x] **Company-session reply #1** (UI facts for Watt, Jupiter and AMP). Pages 01, 05, 06 and 07 are updated with it.
 - [x] **New resume:** the full-stack version is in the "Kurt Wang Resume" Claude Doc (first tab).
 - [x] **3 resume claims confirmed:** AMP is now "owned … leading contract engineers" (not "sole"); the PnL latency number is removed; the AMP landing page is **~10s → 5s** everywhere.
-- [ ] **Company-session reply #2** (design Q&A for Jupiter and Watt) → the remaining `[fill in]` gaps in pages 05–07.
+- [x] **Company-session reply #2** (design Q&A for Jupiter and Watt): applied to pages 01–07 on Nov 3–4.
+- [ ] **Company-session reply #4** (short follow-ups) → the `[confirm]`s in page 07.
 - [ ] **Company-session reply #3** (how Jupiter and AMP use AG Grid) → the `[fill in]` gaps in page 08.
 - [ ] Interview date, format and interviewer names.

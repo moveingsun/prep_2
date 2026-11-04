@@ -91,7 +91,7 @@ Tip: open with a one-line headline ("This is about a 10× cost spike I tracked d
 <a id="s7"></a>
 ## S7 · The 10× Snowflake cost spike
 - **Situation:** Warehouse spend jumped to about **100 credits/day**, roughly 10× normal.
-- **Action:** Profiled query history and found a **query loop consuming 98% of execution time**. `[fill in: how you found it — query_history, warehouse metering, tagging]` Removed the loop. `[fill in: and added a guard/alert so it couldn't recur?]`
+- **Action:** Profiled the warehouse and found a **cache-warming loop using 98% of execution time** (222.9 of 227.2 execution-hours over 7 days). The queue behind it was failing too: 96 of 179 runs failed that week, and 453 messages were dead-lettered. Fixed it: renewed the message locks, sent one message per deal, and warmed only the current and prior month. `[fill in: how you found it, and any alert you added]`
 - **Result:** Back to about **11 credits/day**.
 - **Lesson:** "Cost is a production metric. Now I put cost tracking in from day one, which is why S1 has per-turn cost."
 - **Use for:** escalation point, debugging, cost awareness in AI (token cost is the same story).

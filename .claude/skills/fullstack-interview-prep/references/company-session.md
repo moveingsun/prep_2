@@ -12,8 +12,9 @@ Kurt runs a separate Claude session on his BETM work laptop. It can read BETM's 
 | # | Topic | Sent | Status |
 |---|---|---|---|
 | 1 | UI facts per project (stack, Kurt's commits, others' work, numbers) | 2026-11-03 | Answered 2026-11-03 → `knowledge.md` §3 |
-| 2 | Design Q&A for Jupiter and Watt (28 questions) | 2026-11-03 | Jupiter part answered 2026-11-03 → `knowledge.md` §3 and page 06. Watt + BOTH: waiting (Kurt must say "next") |
+| 2 | Design Q&A for Jupiter and Watt (28 questions) | 2026-11-03 | Jupiter part answered 2026-11-03 → page 06. Watt + BOTH answered 2026-11-04 → `knowledge.md` §3 and page 07 |
 | 3 | AG Grid usage in Jupiter and AMP | given to Kurt 2026-11-03 | Waiting |
+| 4 | Follow-ups on page 07's `[confirm]`s | given to Kurt 2026-11-04 | Waiting |
 
 The first reply leaked a colleague's name. Remove names before you copy anything into the repo.
 
@@ -184,5 +185,55 @@ Rules:
   hostnames, secrets, license keys,
   trade/customer data, or people's
   names (say "another engineer").
+- Plain text, no tables.
+```
+
+## Message 4: Watt follow-ups (as given to Kurt)
+
+```
+Fourth request, short follow-ups for
+interview prep. Answer each in 1-3
+lines. If the code doesn't show it,
+write "unsure".
+
+1. Gateway limit: an early test saw a
+   stream cut at 61.1 s, but the chat
+   window is 170 s under a 180 s limit.
+   Which gateway or route cut at 61 s?
+   Was the limit raised later?
+2. Jupiter Ask AI: an earlier answer
+   said 40-second stream windows. Is
+   that still true? Why not 170 s?
+3. chat-kit client: EventSource or
+   fetch streaming? How is the token
+   sent? Are events checked at run
+   time (zod, guards), or only typed?
+4. Do Watt apps each bundle their own
+   React, or share one? Does mount
+   return an unmount function? Who
+   makes the shadow root?
+5. Do data routes (not only admin)
+   check that the user has access to
+   that app, or only the token?
+6. The strict-ID Redis fix: what did
+   the library change? (For example,
+   Redis makes the IDs now.)
+7. How is a bad app version rolled
+   back?
+8. Why was localStorage for tokens
+   reverted?
+9. Why does Data Validation use a
+   hash router?
+10. Is Doc Intelligence the same app
+    as Ask Knowledge? What does the
+    Memory app do, in one line?
+
+Rules:
+- Read-only. Don't edit, commit, or
+  push.
+- Public-safe: no code, internal URLs,
+  hostnames, secrets, keys, trade or
+  customer data, or people's names
+  (say "another engineer").
 - Plain text, no tables.
 ```

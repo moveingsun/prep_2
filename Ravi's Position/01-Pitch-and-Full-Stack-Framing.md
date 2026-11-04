@@ -51,7 +51,9 @@
 > "My background is backend, and that's still my deepest skill. But this year most of my commits have been React and TypeScript. On our AI platform I built the Data Validation app and the Ask Data app, with React 19, Vite and Tailwind, and I wrote about two-thirds of the platform's UI test files. On Jupiter I built the AI chat page and the live PnL views. So I'm a full-stack engineer whose backend side is stronger. I'm working to close that gap."
 
 **If they dig deeper:**
-- Give one concrete React detail only a builder knows. `[fill in: pick one, e.g., how the Ask AI page polls a job and renders SQL, tables and charts; how PDF citation highlighting works; how the daylight-saving bug showed up in charts and Excel]`
+- Give one concrete detail only a builder knows. Best options:
+  - **The Ask AI polling:** every 2 seconds, then every 5 after 30 seconds, stopping at 10 minutes or after 3 failures in a row ([06 Q9](06-Jupiter-Load-Deal-Deep-Dive.md)).
+  - **The DST bug:** two 1 AM hours collapsed into one instant. The fix keys every hourly row by date + hour-ending + EDT/EST ([06 Q8](06-Jupiter-Load-Deal-Deep-Dive.md)).
 - Your stack: React 18/19, TypeScript, Vite (and Create React App on AMP), Tailwind, React Router, hooks and Context (**no Redux**), AG Grid, Recharts / ECharts / Vega-Lite, MSAL, Vitest + Testing Library.
 - If asked "why no state library?": server data lives in the API and is fetched per page. Shared client state is small (the user, permissions, theme), so Context is enough. `[fill in: confirm how Watt apps fetch and cache data]`
 - If asked to rate yourself, say a number and a reason: "About 7 out of 10 on React. Strong on hooks, data-heavy pages, typed APIs and testing. Less experience with SSR, Next.js and design systems."
@@ -63,11 +65,11 @@
 
 ### Q3. Walk me through a feature you built end to end, from database to UI.  `[P0]`
 **Say this first (~30 sec):**
-> "The Ask AI feature on Jupiter. Traders wanted to ask questions about load deals in plain English. I built every layer. The agents use Snowflake Cortex with a semantic view, and LangGraph with citation checks. A job API takes each question, with rate limits, a read-only database role and cost tracking per turn. The React chat page sends the question, polls the job, and shows the answer as SQL, a table and a chart, with conversation history. The hard part was `[fill in: e.g., slow answers, so the job + polling design; or rendering many answer types]`. I built it in three weeks."
+> "The Ask AI feature on Jupiter. Traders wanted to ask questions about load deals in plain English. I built every layer. The agents use Snowflake Cortex with a semantic view, and LangGraph with citation checks. A job API takes each question, with rate limits, a read-only database role and cost tracking per turn. The React chat page sends the question, polls the job, and shows the answer as SQL, a table and a chart, with conversation history. The hard part was the network: our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So I chose a job plus polling, and later moved to streaming in 40-second windows. I built the first version in three weeks."
 
 **If they dig deeper:**
 - Use this order: problem → data → API → UI → hard part → result.
-- **Why a job and polling, not one long request?** Answers can take `[fill in: seconds]`. A job gives retries, rate limits, cost logging and a clean "still working" state in the UI. On Watt you later used SSE streaming for chat. Be ready to compare the two ([05](05-Frontend-System-Design.md)).
+- **Why a job and polling, not one long request?** Long connections were cut by the gateway and the load balancer. A job also gives rate limits, cost logging and a clean "still working" state. Job state lives in Redis, so any pod can answer a poll. In October you moved Ask AI to the shared chat package, which streams in 40-second windows and falls back to polling. Full details: [06 Q9](06-Jupiter-Load-Deal-Deep-Dive.md).
 - **Backup example:** the Watt admin cost page. You wrote the cost APIs and a shared admin-kit package, and 3 apps now use the same page.
 - Mention loading and error states, and how you tested it (Vitest + Testing Library).
 

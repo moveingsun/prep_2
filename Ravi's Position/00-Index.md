@@ -2,7 +2,7 @@
 
 **Target:** full-stack engineer interview, about **Tue Nov 10, 2026** `[fill in: company, role title, exact date, interviewers]`
 
-**What you heard:** heavy on **React + TypeScript**, plus the **design of Load Deal (Jupiter) and Watt**.
+**What you heard:** heavy on **React + TypeScript** and **AG Grid** (Ravi), plus the **design of Load Deal (Jupiter) and Watt**.
 
 > This guide has the same layout as the [AI Engineer guide](../AI%20Engineer/00-Index.md). Stories S1–S14 and M1 live in the [Behavioral Story Bank](../AI%20Engineer/13-Behavioral-Story-Bank.md). This guide links to them; it doesn't copy them.
 
@@ -14,8 +14,8 @@
 
 ## Likely interview shape `[fill in: confirm with recruiter]`
 1. **Intro and background** (5–10 min) → [01](01-Pitch-and-Full-Stack-Framing.md)
-2. **React / TypeScript questions** (10–15 min) → [02](02-TypeScript-Fundamentals.md), [03](03-React-Fundamentals.md)
-3. **Live coding in React + TS** (20–45 min) → [04](04-React-Coding-Exercises.md)
+2. **React / TypeScript / AG Grid questions** (10–15 min) → [02](02-TypeScript-Fundamentals.md), [03](03-React-Fundamentals.md), [08](08-AG-Grid.md)
+3. **Live coding in React + TS, probably with AG Grid** (20–45 min) → [04](04-React-Coding-Exercises.md), [08](08-AG-Grid.md)
 4. **Project deep dive: Load Deal or Watt** (15–20 min) → [06](06-Jupiter-Load-Deal-Deep-Dive.md), [07](07-Watt-AI-Platform-Deep-Dive.md)
 5. **Design questions** ("how would you build…") → [05](05-Frontend-System-Design.md)
 6. **Your questions** (5 min)
@@ -31,6 +31,7 @@
 | 05 | [Full-Stack & Frontend System Design](05-Frontend-System-Design.md) | Medium-High |
 | 06 | [Jupiter (Load Deal) Deep Dive](06-Jupiter-Load-Deal-Deep-Dive.md) | **High** |
 | 07 | [Watt (AI Platform) Deep Dive](07-Watt-AI-Platform-Deep-Dive.md) | **High** |
+| 08 | [AG Grid](08-AG-Grid.md) | **Very high** (Ravi) |
 
 ## 7-day plan (Wed Nov 4 → Tue Nov 10)
 
@@ -46,23 +47,24 @@ About **2–3 hours a day**. If the interview date moves, keep the order and shi
 - [03](03-React-Fundamentals.md): Primer + the first half of the `[P0]` questions (rendering, state, effects, hooks).
 - [04](04-React-Coding-Exercises.md): set up the Vite practice project. Do exercises 1–2.
 
-**Day 3 · Fri 11/6: React finish + coding**
+**Day 3 · Fri 11/6: React finish + AG Grid basics**
 - [03](03-React-Fundamentals.md): the rest of the `[P0]` questions (performance, React 19, Server Components, testing).
-- [04](04-React-Coding-Exercises.md): exercises 3–5. Time yourself: 25 min each.
+- [08](08-AG-Grid.md): Primer + the `[P0]` questions. Ravi said the interview is heavy on AG Grid, so give this the most time today.
+- [04](04-React-Coding-Exercises.md): exercises 3–4. Time yourself: 25 min each.
 
 **Day 4 · Sat 11/7: Jupiter (Load Deal) deep dive**
 - [06](06-Jupiter-Load-Deal-Deep-Dive.md): fill in every `[fill in]` from the company-session reply.
 - Draw the architecture from memory on paper. Then give the 2-minute walkthrough out loud.
+- [08](08-AG-Grid.md): type the AG Grid coding tasks from memory. Jupiter uses AG Grid, so connect each feature to a screen you know.
 - [05](05-Frontend-System-Design.md): the data-grid, dashboard and long-running-job scenarios. They are the general versions of Jupiter's design.
-- [04](04-React-Coding-Exercises.md): exercises 6–7.
 
 **Day 5 · Sun 11/8: Watt deep dive**
 - [07](07-Watt-AI-Platform-Deep-Dive.md): fill in, draw it, then give the 2-minute walkthrough out loud.
 - [05](05-Frontend-System-Design.md): the app-shell, auth and AI-chat scenarios. They are the general versions of Watt.
-- [04](04-React-Coding-Exercises.md): exercises 8–10.
+- [04](04-React-Coding-Exercises.md): exercises 5–10 (pick 3).
 
 **Day 6 · Mon 11/9: mock interview**
-- Ask Claude for a mock round: 2 coding exercises from scratch (25 min each), 1 project deep dive with follow-ups, and 5 random `[P0]` questions.
+- Ask Claude for a mock round: 1 AG Grid coding task and 1 React exercise from scratch (25 min each), 1 project deep dive with follow-ups, and 5 random `[P0]` questions (at least 2 on AG Grid).
 - Redo anything you scored low on.
 
 **Day 7 · Tue 11/10: light review**
@@ -74,5 +76,6 @@ About **2–3 hours a day**. If the interview date moves, keep the order and shi
 - [x] **Company-session reply #1** (UI facts for Watt, Jupiter and AMP). Pages 01, 05, 06 and 07 are updated with it.
 - [x] **New resume:** the full-stack version is in the "Kurt Wang Resume" Claude Doc (first tab).
 - [x] **3 resume claims confirmed:** AMP is now "owned … leading contract engineers" (not "sole"); the PnL latency number is removed; the AMP landing page is **~10s → 5s** everywhere.
-- [ ] **Company-session reply #2** (design Q&A for Jupiter and Watt) → the remaining `[fill in]` gaps in pages 06 and 07.
+- [ ] **Company-session reply #2** (design Q&A for Jupiter and Watt) → the remaining `[fill in]` gaps in pages 05–07.
+- [ ] **Company-session reply #3** (how Jupiter and AMP use AG Grid) → the `[fill in]` gaps in page 08.
 - [ ] Interview date, format and interviewer names.

@@ -6,7 +6,7 @@ This repo is Kurt Wang's interview-prep study guide for the **BCBSMA Sr. AI Engi
 
 ## Conventions for pages in `AI Engineer/`
 
-The same conventions apply to `Ravi's Position/`, the full-stack interview guide (Nov 2026). From there, story links go up one folder: `../AI%20Engineer/13-Behavioral-Story-Bank.md#sN`. Internal names: Watt = the BETM AI platform; Jupiter = Load Deal.
+The same conventions apply to `Ravi's Position/`, the full-stack interview guide (Nov 2026). For that guide, use the project skill `.claude/skills/fullstack-interview-prep/`: it has the facts learned so far (who built what, confirmed resume numbers), the company-laptop session workflow, and how to re-render the resume PDF. From there, story links go up one folder: `../AI%20Engineer/13-Behavioral-Story-Bank.md#sN`. Internal names: Watt = the BETM AI platform; Jupiter = Load Deal.
 
 - **File names:** `NN-Title-With-Hyphens.md`. Link between pages with relative paths (`[RAG](03-RAG.md)`). Link to stories with `13-Behavioral-Story-Bank.md#s1`; story anchors are `<a id="sN">` tags. `00-Index.md` must link to every page.
 - **Page template:**

@@ -167,7 +167,7 @@
 
 **If they dig deeper:** Watch for **training-serving skew**, where online features are computed differently than in training. Streaming (Kafka/Event Hubs) sits between the two for near-real-time needs.
 
-**Your angle:** The AMP landing page went 20s → 5s by having Databricks jobs precompute results into Redis ([S14](13-Behavioral-Story-Bank.md#s14)). That's the batch-precompute serving pattern exactly.
+**Your angle:** The AMP landing page went from about 10s to 5s by having Databricks jobs precompute results into Redis ([S14](13-Behavioral-Story-Bank.md#s14)). That's the batch-precompute serving pattern exactly.
 
 ---
 

@@ -1,5 +1,9 @@
 # Interview Prep
 
+## Full-stack engineer interview (about Tue, Nov 10, 2026)
+
+**→ Start here: [Full-Stack Study Guide Index](Ravi's%20Position/00-Index.md)**: 7-day plan, TypeScript, React, coding exercises, and the Jupiter and Watt deep dives.
+
 ## BCBSMA Sr. AI Engineer: hiring-manager round (tentatively Fri, Oct 16, 2026)
 
 **→ Start here: [Study Guide Index](AI%20Engineer/00-Index.md)**

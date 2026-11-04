@@ -302,7 +302,7 @@ QUERY  (online, every user turn)
 - **Infra:** provisioned throughput (PTU) for steady high volume (predictable latency); batch APIs for offline jobs like re-summarizing documents.
 - **Skip work:** don't retrieve for greetings or chit-chat (router); short-circuit deterministic lookups.
 
-**Your angle:** Strong. You took the AMP landing page from 20s to 5s and outage management from 7s to 1s ([S14](13-Behavioral-Story-Bank.md#s14)), took Snowflake spend from ~100 to ~11 credits/day ([S7](13-Behavioral-Story-Bank.md#s7)), and built per-turn cost tracking ([S1](13-Behavioral-Story-Bank.md#s1)). Same playbook: profile, find the dominant cost, remove it.
+**Your angle:** Strong. You took the AMP landing page from about 10s to 5s and outage management from 7s to 1s ([S14](13-Behavioral-Story-Bank.md#s14)), took Snowflake spend from ~100 to ~11 credits/day ([S7](13-Behavioral-Story-Bank.md#s7)), and built per-turn cost tracking ([S1](13-Behavioral-Story-Bank.md#s1)). Same playbook: profile, find the dominant cost, remove it.
 **Likely follow-ups:** "What's your target latency?" (time-to-first-token < ~1–2s for chat; full answer a few seconds; agree on it with product)
 
 ---

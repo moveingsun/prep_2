@@ -245,7 +245,7 @@ Then agree on a next step together. For example: "Eval runs are now a CI gate. C
 - **Async first:** design docs, short recorded walkthroughs, and a Q&A channel. Answers I give twice become docs.
 - **Scale myself:** CLAUDE.md, runbooks, and checklists cut down on repeated questions ([S6](13-Behavioral-Story-Bank.md#s6)).
 
-**Your angle:** [M1](13-Behavioral-Story-Bank.md#m1) is this exact situation. For two months you coded all day, wrote each contractor's instructions at the end of the day, checked in on the way to work, and reviewed PRs and paired in the morning. [S14](13-Behavioral-Story-Bank.md#s14): as the sole engineer on five services plus a UI, you had to prioritize ruthlessly and document well.
+**Your angle:** [M1](13-Behavioral-Story-Bank.md#m1) is this exact situation. For two months you coded all day, wrote each contractor's instructions at the end of the day, checked in on the way to work, and reviewed PRs and paired in the morning. [S14](13-Behavioral-Story-Bank.md#s14): as the owner of five services plus a UI, you had to prioritize ruthlessly and document well.
 
 **Likely follow-ups:** "What happens when you fall behind on your own work?" Answer: re-plan with the PO and drop my own scope before cutting 1:1s or reviews.
 
@@ -320,7 +320,7 @@ Then agree on a next step together. For example: "Eval runs are now a CI gate. C
 - **Don't redo their work.** Give feedback in review instead.
 - **Make it visible:** they present it.
 
-**Your angle:** Show self-awareness: "I've been the sole engineer on AMP for a year, so my natural risk is holding on too tight. My guard against that is X." Interviewers like this kind of honesty. [S3](13-Behavioral-Story-Bank.md#s3): you wrote the spec and let the frontend engineers own the implementation. In [M1](13-Behavioral-Story-Bank.md#m1) you handed the AMP UI work to a frontend engineer and kept the backend yourself.
+**Your angle:** Show self-awareness: "I've owned AMP end to end for a year, so my natural risk is holding on too tight. My guard against that is X." Interviewers like this kind of honesty. [S3](13-Behavioral-Story-Bank.md#s3): you wrote the spec and let the frontend engineers own the implementation. In [M1](13-Behavioral-Story-Bank.md#m1) you handed the AMP UI work to a frontend engineer and kept the backend yourself.
 
 ---
 

@@ -41,7 +41,7 @@ Tip: open with a one-line headline ("This is about a 10× cost spike I tracked d
 ## S1 · Load Deal AI: a domain assistant in 3 weeks
 - **Situation:** Load-deal questions (pricing, volumes, PnL) required someone who knew both the data model and the business rules. `[fill in: who asked them, e.g., traders/analysts, and how they got answers before]`
 - **Task:** Build a domain assistant fast, and make it trustworthy, not just impressive in a demo.
-- **Action:** Used a **Snowflake Cortex agent** over a **semantic view** for numeric questions, so the model writes SQL against governed definitions instead of guessing, plus a **curated knowledge base** for business rules. Added a **LangGraph pipelines agent** with **citation checks**: answers must point to their sources. Built a **20-question eval set** with expected answers, logged **per-turn cost**, and shipped a chat UI that renders the SQL, tables, and charts so users can verify results.
+- **Action:** Used a **Snowflake Cortex agent** over a **semantic view** for numeric questions, so the model writes SQL against governed definitions instead of guessing, plus a **curated knowledge base** for business rules. Added a **LangGraph pipelines agent** with **citation checks**: answers must point to their sources. Built a **20-question eval set** with expected answers, logged **per-turn cost**, and built the React chat page myself: it submits each question as a job (with rate limits, cost per turn, and a read-only database role), polls for the answer, and renders the SQL, tables, and charts so users can verify results.
 - **Result:** Delivered in **3 weeks**. `[fill in: eval pass rate, avg cost/turn, adoption/users, feedback]`
 - **Lesson:** "Eval first. The 20 questions were what let me change prompts and models without fear. I'd also bring a business user in earlier to write those questions." `[adjust to your real lesson]`
 - **Use for:** proudest project, eval, RAG vs SQL, speed of delivery.
@@ -59,7 +59,7 @@ Tip: open with a one-line headline ("This is about a 10× cost spike I tracked d
 ## S3 · Watt (AI Shell): specs other engineers built from
 - **Situation:** The company needed one sign-in front door for multiple AI apps (Doc Intelligence, Data Intelligence, Data Validation) with consistent permissions.
 - **Task:** Own the backend and define the contract the frontend team would build against.
-- **Action:** Designed an **entitlements-driven app registry**, **signed short-lived bundle links**, **UI-element-level permissions**, and API-gateway routing. **Wrote the specs the frontend engineers implemented.** `[fill in: how you reviewed their work / answered questions / handled a spec change]`
+- **Action:** Designed an **entitlements-driven app registry**, **signed short-lived bundle links**, **UI-element-level permissions**, and API-gateway routing. **Wrote the specs the frontend engineers implemented.** A frontend engineer built the shell. I also designed the chat API contract (SSE streaming over Redis) that the shared chat-kit runs on, and built two apps on the shell in React (Data Validation, Ask Data), the Admin tab, and a shared admin-kit used by 3 apps. `[fill in: how you reviewed their work / answered questions / handled a spec change]`
 - **Result:** `[fill in: number of apps onboarded, time to add a new app]`
 - **Lesson:** "A clear written spec is the cheapest form of leadership. It let people move without waiting on me."
 - **Use for:** leading through design, cross-team work, security.
@@ -135,9 +135,9 @@ Tip: open with a one-line headline ("This is about a 10× cost spike I tracked d
 - **Use for:** "Why healthcare?", familiarity with healthcare workflows and data sensitivity.
 
 <a id="s14"></a>
-## S14 · AMP: sole engineer across five services
-- **Situation:** Sole full-time engineer for over a year on AMP's services (analytics, metadata, models, outage, market data) and React UI.
-- **Action:** Prioritized by user pain and risk. Landing page **20s → 5s** (Redis precompute, parallelism, entitlement fixes; Snowflake reads 13 → 3). Outage management **7s → 1s**. Built a **KEDA job-execution service** from scratch (leader election, DAGs, cascade-cancel, stuck-run recovery). Fixed revenue bugs overstating values up to **12×**.
+## S14 · AMP: owning five services and the UI
+- **Situation:** Owned AMP's five services (analytics, metadata, models, outage, market data) and React UI for over a year, leading the UI work of contract engineers.
+- **Action:** Prioritized by user pain and risk. Landing page **~10s → 5s** (Redis precompute, parallelism, entitlement fixes; Snowflake reads 13 → 3). Outage management **7s → 1s**. Built a **KEDA job-execution service** from scratch (leader election, DAGs, cascade-cancel, stuck-run recovery). Fixed revenue bugs overstating values up to **12×**.
 - **Use for:** prioritization, ownership, "you'll be the escalation point". Also a hook for why you want a team: "I've maxed out what one person can do."
 
 ---

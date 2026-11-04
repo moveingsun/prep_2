@@ -92,7 +92,7 @@
 
 **If they dig deeper:** the options menu is smaller scope, a later date, more people, or (only for non-critical features) a lower quality bar. Show the eval data, write the decision down, and if needed, escalate *together* with the PO and a one-page trade-off.
 
-**Your angle:** [S14](13-Behavioral-Story-Bank.md#s14): as the sole engineer on AMP, you constantly triaged competing asks. `[fill in: a request you reshaped instead of refusing]`
+**Your angle:** [S14](13-Behavioral-Story-Bank.md#s14): as the owner of AMP, you constantly triaged competing asks. `[fill in: a request you reshaped instead of refusing]`
 
 ---
 
@@ -167,7 +167,7 @@ Revisit when: e.g., "Foundry Agent Service supports X" or "p95 > 8s"
 ### Q7. How do you balance tech debt against new features?  `[P1]`
 **Say this first:** "I tie debt to things the PO cares about, like speed, reliability, and cost, and I pay it down continuously rather than through heroic rewrites. A standing slice of each sprint, roughly 15–20%, goes to debt and platform work, and the team prioritizes by pain: what slows us down most or wakes us up at night."
 
-**If they dig deeper:** keep a debt register and quantify items: credits per day ([S7](13-Behavioral-Story-Bank.md#s7)), page latency 20s → 5s ([S14](13-Behavioral-Story-Bank.md#s14)). The highest-priority AI debt is anything that makes *every future change risky*: unversioned prompts, no eval set, hard-coded model names, no tracing.
+**If they dig deeper:** keep a debt register and quantify items: credits per day ([S7](13-Behavioral-Story-Bank.md#s7)), page latency ~10s → 5s ([S14](13-Behavioral-Story-Bank.md#s14)). The highest-priority AI debt is anything that makes *every future change risky*: unversioned prompts, no eval set, hard-coded model names, no tracing.
 
 **Your angle:** [S14](13-Behavioral-Story-Bank.md#s14): you rebuilt the metric calculation into one maintainable pipeline.
 

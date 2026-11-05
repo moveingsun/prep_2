@@ -653,7 +653,7 @@ export function DealsTable({ deals }: Props) {
 - **Large data:** for 10k+ rows, virtualize (TanStack Virtual) or move sort, filter, and paging to the server. A grid library (AG Grid, TanStack Table) is a fair choice for trading screens.
 - **Testing:** render three deals, click "Price", read the first row, click again, and check that the order reversed.
 
-**Your angle:** You owned AMP's services and React UI for over a year, and you built the Load Deal service. `[fill in: which AMP screens show deal or position tables, and whether sorting/filtering happens in the browser or on the server]`. See [06 · Jupiter Load Deal Deep Dive](06-Jupiter-Load-Deal-Deep-Dive.md).
+**Your angle:** You owned AMP's services and React UI for over a year, and you built the Load Deal service. AMP has no deal or position tables; deals live in Jupiter. Its tables show asset prices, volumes, revenue and outages, plus outage management, line view, a market monitor, the admin grids and the file list. All sorting happens in the browser.. See [06 · Jupiter Load Deal Deep Dive](06-Jupiter-Load-Deal-Deep-Dive.md).
 
 **Likely follow-ups:**
 - "Filter on more fields." → `[d.id, d.counterparty].some(v => v.toLowerCase().includes(f))`.

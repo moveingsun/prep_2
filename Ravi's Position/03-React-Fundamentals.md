@@ -85,7 +85,7 @@ React compares the new tree with the old tree, **by position**:
 ## Questions & answers
 
 ### Q1. How much React have you actually written?  `[P0]`
-**Say this first (~30 sec):** "I'm a backend-heavy full-stack engineer who writes production React and TypeScript. On our AI platform, Watt, I've made about 240 commits across four React 19 UI repos since August. I created the Ask Data UI, built the Data Validation UI's rules, run-history, monitor, and chat pages, and wrote 68 of the 102 UI test files. On our PnL engine, I built the Ask AI chat page and moved PnL Summary onto the live API. On AMP, I built dashboard tabs, forms, and access checks. I'm strongest where React meets the backend: API contracts, streaming, data fetching, and permissions."
+**Say this first (~30 sec):** "I'm a backend-heavy full-stack engineer who writes production React and TypeScript. On our AI platform, Watt, I've made about 240 commits across four React 19 UI repos since August. I created the Ask Data UI, built the Data Validation UI's rules, run-history, monitor, and chat pages, and wrote about two-thirds of the UI test files. On our PnL engine, I built the Ask AI chat page and moved PnL Summary onto the live API. On AMP, I built dashboard tabs, forms, and access checks. I'm strongest where React meets the backend: API contracts, streaming, data fetching, and permissions."
 
 **If they dig deeper:**
 - Draw a clear line between what you built, what you designed, and what teammates built. Interviewers trust you more when you do.
@@ -99,9 +99,11 @@ React compares the new tree with the old tree, **by position**:
 - **AMP** (React 18, TypeScript, Create React App, AG Grid, ECharts, Highcharts, Chart.js, embedded Power BI, Context, Dexie, MSAL, Datadog RUM):
   - **Built:** the asset dashboard's price and volume tabs, filters, and widgets; the outage-management forms; the admin user and service-principal forms; and entitlement-based access checks.
   - **Reviewed:** AMP UI work from a contract frontend engineer ([M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1)). `[fill in: one real thing you caught in review]`
-- **Wayfair:** custom Backstage plugins in TypeScript. `[fill in: frontend (React) plugins, backend plugins, or both?]`
-- Lead with what you built, not the commit count. Use the numbers (239 commits, 4 repos, 68 of 102 test files) only as support.
-- Name the gap honestly: "Visual craft, like animation and design systems, is where I have less depth. A teammate built our shared ui-kit." `[confirm: you have not shipped Next.js or Server Components in production]`
+- **Wayfair:** you coded the very first version of Kronos as a co-op in 2018, and later custom Backstage plugins in TypeScript.
+  - **Backstage** is Spotify's open-source framework for developer portals, now a CNCF project and still active. Wayfair teams used it as the frame for their UIs, so nobody rebuilt navigation, sign-in or the service catalog. Your plugins brought GitHub, PagerDuty, Datadog and Slack data into one place ([S12](../AI%20Engineer/13-Behavioral-Story-Bank.md#s12)).
+  - **If they dig in:** "It was a few years ago, so I don't remember the plugin internals well. The idea was to build on a shared framework instead of reinventing the wheel. It's the same idea as our Watt shell." Don't invent details. Some interviewers know Backstage well.
+- Lead with what you built, not the commit count. Use the numbers (239 commits, 4 repos, about two-thirds of the UI test files) only as support.
+- Name the gap honestly: "Visual craft, like animation and design systems, is where I have less depth. A teammate built our shared ui-kit." And say it plainly: you haven't used Next.js or Server Components.
 - If they ask what was hard about React for a backend engineer, one honest shape is: "Thinking in renders and snapshots instead of steps, and knowing when an effect is the wrong tool." `[adjust to your real experience]`
 
 **Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1) (the Ask AI chat page is the UI of Load Deal AI), [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14), [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1). Pitch: [01](01-Pitch-and-Full-Stack-Framing.md). Deep dives: [06 · Jupiter](06-Jupiter-Load-Deal-Deep-Dive.md) and [07 · Watt](07-Watt-AI-Platform-Deep-Dive.md).
@@ -282,7 +284,7 @@ useEffect(() => {
 **Your angle:** Two real cases from your work:
 - **Polling:** the Jupiter Ask AI page polls a job until the answer is ready. The poll must stop in the cleanup when the user leaves or asks a new question.
 - **Streaming:** Watt chat answers stream over SSE, using the API contract you designed (a teammate's chat-kit reads the stream). An unclosed stream leaks a connection on every new question. It's the same resource leak you'd look for in backend code.
-- **On the server**, a Watt stream closes on purpose at 170 seconds with a `reconnect` event, and Stop sets a flag in Redis ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). `[fill in: how the client stops polling (clearTimeout, AbortController, a "stopped" flag)]`
+- **On the server**, a Watt stream closes on purpose at 170 seconds with a `reconnect` event, and Stop sets a flag in Redis ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). On the client, Ask AI's poll stops with `clearTimeout` plus `AbortController.abort()`, and a run-ID counter makes any stale loop quit. It stops on done, error, 404, three failures in a row, the 10-minute cap, cancel (which also sends a DELETE), or unmount.
 
 **Likely follow-ups:** "How do you avoid an infinite loop?" (Don't set state that is also a dependency without a guard. Avoid object or function dependencies that are new on every render.) · "Why not fetch in useEffect at all?" (Q20)
 
@@ -353,7 +355,7 @@ function TextInput({ ref, ...rest }: Props) {
 - TypeScript: in React 19 types, `useRef` requires an argument. Use `useRef<HTMLDivElement>(null)` for DOM refs.
 - **React 19.3, Fragment refs:** put a `ref` on `<Fragment>` to focus or observe a group of children without adding a wrapper `<div>`.
 
-**Your angle:** Grid and chart libraries are usually driven through a ref: the AG Grid API in Jupiter and AMP, and the embedded Power BI report in AMP. `[fill in: one ref you wrote yourself, e.g., scrolling to a cited passage in the Ask Knowledge PDF viewer, if that's how it works]`
+**Your angle:** Grid and chart libraries are usually driven through a ref: the AG Grid API in Jupiter and AMP, and the embedded Power BI report in AMP. Yours: the **Doc Intelligence PDF viewer** (Sept 29). One ref holds the `div` that pdf.js draws into, and one holds the PDF controller, so it's destroyed on unmount. To reveal a citation, it scrolls the highlight to the center, waits about 400 ms for nearby pages to draw, then centers it again. Page holders are pre-sized, so pages drawing above don't push it off screen.
 **Likely follow-ups:** "Why not keep the timer ID in state?" (It would cause a useless re-render.) · "What is `useImperativeHandle`?"
 
 ---
@@ -404,7 +406,7 @@ function DealTable({ deals }: { deals: Deal[] }) {
   - It relies on the Rules of React. Code that breaks them is skipped, and the lint rules point it out.
 - `useCallback` doesn't make the function faster. The function is still created every render; React just returns the cached one.
 
-**Your angle:** "Measure first, then cache. It's the same instinct as backend work." Be honest about [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14): the AMP landing page went from about 10s to 5s **mainly from backend work** (Redis precompute, parallel calls, entitlement fixes, Snowflake reads 13 → 3). Frontend memoization is small next to a slow API. `[fill in: is the React Compiler turned on in Watt or Jupiter? Both are React 19 + Vite.]`
+**Your angle:** "Measure first, then cache. It's the same instinct as backend work." Be honest about [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14): the AMP landing page went from about 10s to 5s **mainly from backend work** (Redis precompute, parallel calls, entitlement fixes, Snowflake reads 13 → 3). Frontend memoization is small next to a slow API. The React Compiler is on only in the Watt shell (another engineer turned it on). It's off in the child apps and in Jupiter.
 **Likely follow-ups:** "Does the compiler mean we can stop learning memo?" (No. You still need to know why re-renders happen and how to read the Profiler.) · "What's a shallow comparison?"
 
 ---
@@ -451,7 +453,7 @@ export function Can({ perm, children }: CanProps) {
 - Context is a way to pass values, not a state manager. It has no selectors, middleware, or DevTools.
 - Before reaching for Context, try composition: pass `children` or components as props.
 
-**Your angle:** You use this pattern in production. Watt runs on hooks plus Context with **no state library**, and Jupiter and AMP use React Context too. On AMP, you built the **entitlement-based access checks** in the UI. On Watt, a teammate built the shell's entitlement-driven app list on the app registry you designed ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)). Key point: **hiding a button is only UX.** The API must still check every call and fail closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). `[fill in: what your contexts hold, e.g., the MSAL user, permissions, the selected app]` Details in [07 · Watt](07-Watt-AI-Platform-Deep-Dive.md).
+**Your angle:** You use this pattern in production. Watt runs on hooks plus Context with **no state library**, and Jupiter and AMP use React Context too. On AMP, you built the **entitlement-based access checks** in the UI. On Watt, a teammate built the shell's entitlement-driven app list on the app registry you designed ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)). Key point: **hiding a button is only UX.** The API must still check every call and fail closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). Real: most Watt apps have **no** Context. They get the user, token and permissions from the shell's host object at mount. Jupiter's contexts hold the auth user, entitlements (with a `hasAccess` check), settings, theme and deal summary. Yours: the PnL context (data, meta, loading, error, notFound, refresh), and you added month history and YTD to the Portfolio PnL context. Details in [07 · Watt](07-Watt-AI-Platform-Deep-Dive.md).
 **Likely follow-ups:** "Context vs Redux?" (Q19) · "How do you stop every reader from re-rendering?" (Split the context, keep the value stable, or use a store with selectors.)
 
 ---
@@ -483,7 +485,12 @@ const query = useDebouncedValue(search, 250);
 - Test with `renderHook` from React Testing Library.
 - Hooks share logic, not state. To share state, lift it up, or use Context or a store.
 
-**Your angle:** Backend analogy: "It's like pulling repeated code into a shared library function." The next level up is a **shared package**: you built the admin-kit, used by 3 Watt apps, so you know what a stable, reusable API for components and hooks takes. `[fill in: one or two real custom hooks you wrote in Watt or Jupiter, and what they wrap]`
+**Your angle:** Backend analogy: "It's like pulling repeated code into a shared library function." The next level up is a **shared package**: you built the admin-kit, used by 3 Watt apps, so you know what a stable, reusable API for components and hooks takes. Yours:
+- `useCostReport` (admin-kit) loads the cost report. A newer query aborts the older request, and late answers are dropped.
+- `useAskAiJob` (Jupiter) wraps create, poll and cancel for the Ask AI jobs API.
+- `useVisual<T>` (Jupiter) returns one visual's rows from the PnL context.
+- Also `useLoad<T>`, `useConversations` and `useJupiterChatClient`.
+
 **Likely follow-ups:** "If two components call `useDebouncedValue`, do they share state?" (No.) · "How do you test a custom hook?" (`renderHook`, or test it through a small component.)
 
 ---
@@ -530,7 +537,7 @@ function DealForm() {
 - **Validation:** client checks are for UX; the server check is the real one. Share one schema between the backend and the UI, or generate types from OpenAPI.
 - For prices and quantities, avoid floating-point surprises. Keep decimal strings or integer units, and let the backend do the math.
 
-**Your angle:** On AMP you built the **outage-management forms** and the **admin user and service-principal forms**. "Validation must also live on the server" is your backend instinct, the same "never trust input" idea as the Data Validation Service ([S2](../AI%20Engineer/13-Behavioral-Story-Bank.md#s2)). `[fill in: controlled or uncontrolled inputs, which validation approach, how server errors are shown, and whether the Data Validation UI rule/monitor pages are forms]`
+**Your angle:** On AMP you built the **outage-management forms** and the **admin user and service-principal forms**. "Validation must also live on the server" is your backend instinct, the same "never trust input" idea as the Data Validation Service ([S2](../AI%20Engineer/13-Behavioral-Story-Bank.md#s2)). Data Validation's forms are **controlled** with `useState`; run-filter rows are an array updated by index. Server errors show as a banner, and inline in the edit modal. **A gap you can own:** the client keeps FastAPI's `detail` only when it's a string, so a 422 field list falls back to the status text. The fix: map each field error to its input.
 **Likely follow-ups:** "Why might a controlled input feel slow?" (Each keystroke re-renders a big parent. Move state down, or use uncontrolled inputs / react-hook-form.) · "What does `useOptimistic` do?"
 
 ---
@@ -563,7 +570,7 @@ function DealList(
 - **Hide vs unmount:** conditional rendering unmounts, so state is lost. CSS hiding keeps state but keeps effects running. React 19.2's `<Activity mode="hidden">` hides the UI, keeps its state, and stops its effects until it's visible again.
 - Big lists: virtualize (Q21).
 
-**Your angle:** The Jupiter Ask AI page you built shows each answer as SQL, a table, or a chart. That's conditional rendering by answer type. In TypeScript, a discriminated union with a `switch` on the type makes it safe (see [02](02-TypeScript-Fundamentals.md)). `[fill in: how you actually modelled the answer types]` Also, the empty state matters in trading tools: "No deals for this date" is very different from "the load failed."
+**Your angle:** The Jupiter Ask AI page you built shows each answer as SQL, a table, or a chart. That's conditional rendering by answer type. In TypeScript, a discriminated union with a `switch` on the type makes it safe (see [02](02-TypeScript-Fundamentals.md)). Honest: your first version used one result object with parallel arrays, not a union. The chat-kit version uses parts tagged by kind (sql, table, chart, suggestions), which is the union shown above. Also, the empty state matters in trading tools: "No deals for this date" is very different from "the load failed."
 **Likely follow-ups:** "How do you keep a tab's state when the user switches tabs?" (Lift the state up, or use `<Activity>`.)
 
 ---
@@ -591,7 +598,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 - In the Next.js App Router, an `error.tsx` file is an error boundary for that route.
 - `resetKeys` retries the render when a key changes (for example, a new deal).
 
-**Your angle:** The Ask AI page you built for Load Deal AI ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)) renders SQL, tables, and charts from model output. A bad chart spec should break one message, not the whole conversation, so each answer deserves its own boundary. Send caught errors to Datadog RUM, which Watt and AMP already use. `[fill in: does the page have per-answer boundaries today? If not, say you'd add them]` Backend parallel: bulkheads, so one failure doesn't spread.
+**Your angle:** The Ask AI page you built for Load Deal AI ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)) renders SQL, tables, and charts from model output. A bad chart spec should break one message, not the whole conversation, so each answer deserves its own boundary. Send caught errors to Datadog RUM, which Watt and AMP already use. No boundary today; only the chart block has its own "failed" fallback. You'd add one boundary per answer, so one broken chart can't blank the whole chat. Backend parallel: bulkheads, so one failure doesn't spread.
 **Likely follow-ups:** "Does an error boundary catch an error thrown in `onClick`?" (No.) · "How do you let the user retry?" (`resetKeys`, or the reset function passed to the fallback.)
 
 ---
@@ -618,7 +625,7 @@ const PnlChart = lazy(
 - `use(promise)`: the promise must come from a cache or a Server Component. A promise created during render is a new one every render.
 - **React 19.3:** `<ViewTransition>` can animate fallback → content. `use(browser())` (from `react-dom`) skips server rendering for browser-only components; the server HTML shows the fallback.
 
-**Your angle:** Your apps load several heavy chart libraries: AG Charts, ApexCharts, and Vega-Lite in Jupiter; ECharts, Highcharts, Chart.js, and embedded Power BI in AMP. Those are the first things to lazy-load, and having so many chart libraries in one app is itself a bundle-size topic. "Code splitting is like trimming a service's startup: load the heavy parts only when needed." `[fill in: is anything lazy-loaded today?]`
+**Your angle:** Your apps load several heavy chart libraries: AG Charts, ApexCharts, and Vega-Lite in Jupiter; ECharts, Highcharts, Chart.js, and embedded Power BI in AMP. Those are the first things to lazy-load, and having so many chart libraries in one app is itself a bundle-size topic. "Code splitting is like trimming a service's startup: load the heavy parts only when needed." Real examples: you lazy-load Vega-Lite on the Jupiter Ask AI page, two Jupiter grids are lazy-loaded, and on Watt each whole app is loaded with `import()` only for users who may use it.
 **Likely follow-ups:** "Suspense vs an `isLoading` flag?" (Suspense is declarative: the parent decides where loading UI goes, and it can coordinate several children.)
 
 ---
@@ -655,7 +662,7 @@ function DealSearch({ deals }: Props) {
 - **Not a replacement for debounce.** `useDeferredValue` does not reduce network requests. It helps with slow *rendering*. To send fewer requests, debounce.
 - **React 19.3:** unrelated Transitions now render separately, so a slow one doesn't hold up the others.
 
-**Your angle:** Trading grids with thousands of rows and a filter box are the textbook use case. Virtualization (Q21) usually comes first. `[fill in: honestly, have you used Transitions in production? If not, say "I'd reach for it when…"]`
+**Your angle:** Trading grids with thousands of rows and a filter box are the textbook use case. Virtualization (Q21) usually comes first. Honest: no. None of your apps uses `useTransition` or `useDeferredValue`. Say: "I'd reach for it when a filter box makes a big list lag. Typing stays urgent, and the list updates as a transition."
 **Likely follow-ups:** "useTransition vs debounce?" · "Why can't the input's own state be a Transition?"
 
 ---
@@ -698,7 +705,7 @@ function DealSearch({ deals }: Props) {
   6. Upgrade React 18 → 19 as a **separate** step: run the official codemods, fix removed APIs, and update `@types/react`.
   7. Ship in small PRs, and compare bundle size and test results before and after.
 
-**Your angle:** You use React 19 in production: Watt and Jupiter are React 19 with Vite. AMP is still React 18 on Create React App, so you know both worlds and have a clear upgrade story (above). `[fill in: which React 19 features you actually used, e.g., ref as a prop, use(), useActionState, <Context> as provider]`
+**Your angle:** You use React 19 in production: Watt and Jupiter are React 19 with Vite. AMP is still React 18 on Create React App, so you know both worlds and have a clear upgrade story (above). Honest: your apps don't use the newer APIs yet: no ref as a prop, `use()`, `useActionState` or `<Context>` as a provider, and Jupiter still has one `forwardRef`. You did use `useSyncExternalStore` in Data Validation. Say: "We run React 19, but our code uses the classic APIs. Here's where I'd use the new ones."
 **Likely follow-ups:** "What is an Action?" · "What does `useOptimistic` do?" · "What's `<Activity>` for?" · "Why hasn't AMP moved to Vite yet, and what would you do first?"
 
 ---
@@ -734,7 +741,7 @@ export function DealGrid(
 - React 19.2 **Partial Pre-rendering**: serve a static shell from a CDN, then fill in the dynamic parts.
 - react.dev notes that its recommended frameworks also support plain CSR, SPA, and static export. You can add SSR per route later.
 
-**Your angle:** All three apps you work on are client-rendered SPAs (Vite, or CRA on AMP) behind Microsoft sign-in with MSAL, and Jupiter talks to a FastAPI backend. For internal trading tools behind SSO, that is the right fit; SSR matters more for public pages, SEO, or slow devices. Backend-for-frontend instinct: "Server Components move the BFF layer into the component tree." Be honest: `[confirm: "I haven't shipped Server Components in production, but here's how I'd decide…"]`
+**Your angle:** All three apps you work on are client-rendered SPAs (Vite, or CRA on AMP) behind Microsoft sign-in with MSAL, and Jupiter talks to a FastAPI backend. For internal trading tools behind SSO, that is the right fit; SSR matters more for public pages, SEO, or slow devices. Backend-for-frontend instinct: "Server Components move the BFF layer into the component tree." Be honest: "I haven't used Server Components, but here's how I'd decide…"
 **Likely follow-ups:** "Can a Server Component use `useState`?" (No.) · "What is hydration?" · "Why is a Server Function a security concern?"
 
 ---
@@ -791,7 +798,7 @@ const dealId = useSel((s) => s.dealId);
 - **Anti-pattern:** copying server data into Redux or Zustand and syncing it by hand. You get stale data and duplicated loading flags.
 - **High-frequency data (price ticks):** don't push every tick through top-level React state. Buffer and flush a few times per second, or hand updates straight to the grid's transaction API (Q21).
 
-**Your angle:** Your real answer: "Watt runs on hooks plus Context with no state library, and Jupiter and AMP use Context too. We didn't need Redux, because most shared data is server data, and the shared client state (user, permissions, selection) is small. Jupiter and AMP also cache data in the browser with Dexie, on IndexedDB." `[fill in: what Dexie stores, and how you keep it fresh]` Backend view: "TanStack Query is a read-through cache: a TTL (`staleTime`), invalidation on writes, and de-duplication. Same ideas as the Redis precompute in [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14) and the Redis-first entitlements in [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)."
+**Your angle:** Your real answer: "Watt runs on hooks plus Context with no state library, and Jupiter and AMP use Context too. We didn't need Redux, because most shared data is server data, and the shared client state (user, permissions, selection) is small. Jupiter and AMP also cache data in the browser with Dexie, on IndexedDB." AMP's Dexie has one table of key, data and timestamp rows. A 24-hour TTL is checked on read, and the table is cleared at sign-in and logout. Today it holds only reference dropdown lists: on Mar 11, 2026 you stopped caching revenue, pricing and volume in the browser, for the same reason as Jupiter. The backend is the source of truth. Backend view: "TanStack Query is a read-through cache: a TTL (`staleTime`), invalidation on writes, and de-duplication. Same ideas as the Redis precompute in [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14) and the Redis-first entitlements in [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)."
 **Likely follow-ups:** "Why not Redux for everything?" · "Would you add TanStack Query to Watt? What would it replace?" · "How would you handle prices updating 10 times a second?"
 
 ---
@@ -848,7 +855,7 @@ useQuery({
 - **Jupiter:** you moved PnL Summary from mock data to the live API, and built the Ask AI page's job polling.
 - **Watt:** you designed the chat API contract (SSE streaming over Redis) that the shared chat-kit runs on.
 - **AMP:** the landing page went ~10s → 5s **mostly through backend work**: Redis precompute, parallel calls, entitlement fixes, Snowflake reads 13 → 3 ([S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14)). The lesson: shape the API around the screen.
-- **Time is data too:** you fixed daylight-saving bugs across Jupiter's charts, grids, and Excel exports. Power markets have 23-hour and 25-hour days, so hourly data breaks easily. `[fill in: the root cause and the fix]`
+- **Time is data too:** you fixed daylight-saving bugs across Jupiter's charts, grids, and Excel exports. Power markets have 23-hour and 25-hour days, so hourly data breaks easily. Root cause, on both sides: in the API, a `GROUP BY` on time and hour-ending summed the two 1 AM rows (a 2× spike); in the UI, chart points were built from New York wall-clock time, so both 1 AM hours merged. Fix: key every hourly row by date + hour-ending + EDT/EST, with one helper that turns the key into a fixed-offset time ([06 Q8](06-Jupiter-Load-Deal-Deep-Dive.md)).
 
 **Likely follow-ups:** "Why did you poll in Jupiter but stream in Watt?" → "Our gateway cuts every request at a fixed time. Jupiter's Ask AI came first, so a job plus polling was the safe choice. Then I built a streaming library that closes each stream before the limit and resumes from the last event ID. Jupiter moved to it in October." · "What's a request waterfall?" · "A PnL calc takes 5 seconds. How do you keep the UI from feeling frozen?" (Skeletons, keep the previous data visible, show progress, cancel on navigation.)
 
@@ -881,7 +888,7 @@ gridRef.current?.api.applyTransactionAsync({
 - **Bundle size:** code-split (Q14) and check the bundle with an analyzer.
 - **Core Web Vitals:** LCP (load), INP (responsiveness), CLS (layout shift).
 
-**Your angle:** Jupiter and AMP both use AG Grid, and Watt and AMP send real-user data to **Datadog RUM** (page loads, slow interactions, errors). Two honest links. First, [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14): "On the AMP landing page, I measured where the time went end to end and fixed the biggest part first, and that was the backend." Second, [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9): "A grid that sends one request per row is the frontend version of the N+1 problem I fixed in the entitlements service." `[fill in: a time you used RUM data or the React Profiler to find a slow screen, if any]`
+**Your angle:** Jupiter and AMP both use AG Grid, and Watt and AMP send real-user data to **Datadog RUM** (page loads, slow interactions, errors). Two honest links. First, [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14): "On the AMP landing page, I measured where the time went end to end and fixed the biggest part first, and that was the backend." Second, [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9): "A grid that sends one request per row is the frontend version of the N+1 problem I fixed in the entitlements service." Your real practice: you analyze Datadog RUM data with Claude to see where users wait, and most of the slowness came from the backend, so that's where you fixed it. You haven't used the React Profiler. Say when you would: when the APIs are fast but a screen still renders slowly.
 **Likely follow-ups:** "React Profiler vs Chrome Performance panel?" (The Profiler shows component renders; Chrome shows everything on the main thread.) · "How would you show 1,000 price updates per second?" (Batch them, update only changed cells by row ID, and never re-render the whole table.)
 
 ---
@@ -923,7 +930,7 @@ export const handlers = [
 - **Contract safety:** generate TypeScript types from the OpenAPI spec so the UI and API can't drift apart.
 - Hooks: `renderHook`. Snapshot tests only for small, stable output.
 
-**Your angle:** Strong, real evidence: you wrote **68 of the 102 UI test files** across the Watt UI repos, with Vitest and Testing Library. Jupiter also uses Vitest. The 20-question eval set in Load Deal AI ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)) is the same philosophy: test the behavior users care about. `[fill in: one test you're proud of, and whether you mock the API with MSW or with vi.mock]`
+**Your angle:** Strong, real evidence: you wrote **about two-thirds of the UI test files** across the Watt UI repos, with Vitest and Testing Library. Jupiter also uses Vitest. The 20-question eval set in Load Deal AI ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)) is the same philosophy: test the behavior users care about. No MSW: your tests use `vi.mock`, `vi.stubGlobal` for `fetch`, and `vi.fn`. **The one to describe:** Data Validation's conversation search test. With fake timers, it proves that three bursts of typing send **one** request after a 300 ms debounce, and that a slow older answer can't overwrite a newer one.
 **Likely follow-ups:** "How do you test a component that fetches data?" (MSW plus `findBy…`.) · "What do you cover with E2E?" (The few flows that would hurt most if broken.)
 
 ---
@@ -954,7 +961,7 @@ export const handlers = [
 - Tools: `eslint-plugin-jsx-a11y`, axe DevTools, Lighthouse, and VoiceOver on a Mac.
 - W3C's guide says it directly: "No ARIA is better than bad ARIA."
 
-**Your angle:** Trading users live on the keyboard, so keyboard support is a productivity feature, not only compliance. `[fill in: any accessibility requirements at Cerner (S13) or BETM]`
+**Your angle:** Trading users live on the keyboard, so keyboard support is a productivity feature, not only compliance. At Cerner ([S13](../AI%20Engineer/13-Behavioral-Story-Bank.md#s13)), the UI had to work with screen readers. In the Java UI you gave every button and box a description, so the reader could announce it. In React it's the same idea: a real `<button>` with text, or `aria-label` when there's only an icon. Wayfair had no accessibility requirement.
 **Likely follow-ups:** "How do you make a modal accessible?" (The native `<dialog>` element, or: move focus in, trap it, close on Esc, return focus on close.)
 
 ---
@@ -977,7 +984,7 @@ export const handlers = [
 - Higher-order components and render props are mostly replaced by custom Hooks.
 - Before upgrading to React 19, look for removed APIs: string refs, legacy context, `defaultProps` on function components, and `ReactDOM.render`.
 
-**Your angle:** AMP (React 18 on Create React App) is your real legacy codebase. `[fill in: does it have any class components?]` "Same as a backend migration ([S11](../AI%20Engineer/13-Behavioral-Story-Bank.md#s11), Kronos to Kubernetes): move step by step, behind tests, highest value first." The CRA → Vite plan is in Q16.
+**Your angle:** AMP (React 18 on Create React App) is your real legacy codebase. It has no class components; the only class is a Dexie database class. "Same as a backend migration ([S11](../AI%20Engineer/13-Behavioral-Story-Bank.md#s11), Kronos to Kubernetes): move step by step, behind tests, highest value first." The CRA → Vite plan is in Q16.
 **Likely follow-ups:** "What replaced HOCs?" (Custom Hooks.)
 
 ---
@@ -991,7 +998,7 @@ export const handlers = [
 - Component libraries (MUI, Ant Design, or Radix-based kits) save time on accessible widgets.
 - Trading UIs need dense layouts, number alignment (`font-variant-numeric: tabular-nums`), and clear up/down colors.
 
-**Your angle:** Watt uses **Tailwind**, with a shared ui-kit that a teammate built and that your apps use. `[fill in: what Jupiter and AMP use for styling, and one thing you like or dislike about Tailwind]`
+**Your angle:** Watt uses **Tailwind**, with a shared ui-kit that a teammate built and that your apps use. Jupiter and AMP use Tailwind too. AMP has custom colors, a font and an extra-wide breakpoint (about 3,000 `className` uses), plus 12 global CSS files and about 106 inline styles, and no CSS modules or CSS-in-JS. `[fill in: one thing you like or dislike about Tailwind]`
 **Likely follow-ups:** "How do you keep styles consistent across teams?" (Design tokens, a shared component library, and lint rules.)
 
 ---

@@ -15,6 +15,7 @@ Kurt runs a separate Claude session on his BETM work laptop. It can read BETM's 
 | 2 | Design Q&A for Jupiter and Watt (28 questions) | 2026-11-03 | Jupiter part answered 2026-11-03 → page 06. Watt + BOTH answered 2026-11-04 → `knowledge.md` §3 and page 07 |
 | 3 | AG Grid usage in Jupiter and AMP (+ items 12–15 added 2026-11-04) | sent 2026-11-04 (the 15-item version) | Answered 2026-11-04 (both parts) → `knowledge.md` §3, pages 08, 06, 07 |
 | 4 | Follow-ups on page 07's `[confirm]`s | given to Kurt 2026-11-04 | Answered 2026-11-04 → `knowledge.md` §3 and page 07 |
+| 5 | The last code-answerable `[fill in]`s (30 questions, parts A–C) | given to Kurt 2026-11-04 | All parts answered 2026-11-04 → `knowledge.md` §3 and pages 01–08 |
 
 The first reply leaked a colleague's name. Remove names before you copy anything into the repo.
 
@@ -254,4 +255,133 @@ Rules:
   customer data, or people's names
   (say "another engineer").
 - Plain text, no tables.
+```
+
+## Message 5: last code-answerable gaps (as given to Kurt)
+
+Maps to: Part A → pages 02 and 03 (and 01 Q-state, 07 Q9); Part B → pages 06 and 08; Part C → pages 05, 04 and 07. Everything else left in the guide is Kurt-only (the company, his reasons, review and disagreement stories, opinions).
+
+```
+Fifth request, for interview prep:
+the last gaps in my study guide. Use
+the code, git history and docs of the
+Watt app repos, Jupiter (Load Deal)
+and AMP. Answer each in 1-3 lines,
+and say who wrote it (me / another
+engineer / both).
+
+PART A: TypeScript and React (Watt
+apps and Jupiter UI)
+1. TypeScript version and "strict" in
+   each tsconfig. Does CI run tsc
+   (--noEmit or -b)? What else runs
+   in each repo's CI?
+2. Props: type or interface? Is it
+   enforced by lint?
+3. React Compiler on or off? Which
+   React 19 features are used (ref
+   as a prop, use(), useActionState,
+   <Context> as provider)? Any
+   useTransition/useDeferredValue?
+4. What do the React contexts hold,
+   in each app?
+5. Name 2-3 custom hooks I wrote, and
+   what each wraps.
+6. How do Watt apps fetch and cache
+   data (plain fetch, a shared hook,
+   any cache)?
+7. Data Validation forms: controlled
+   or uncontrolled? How are 422/409
+   server errors shown? How are
+   create vs edit payloads typed? Is
+   there a union type for rule or
+   monitor kinds?
+8. admin-kit: any generic component
+   or hook typed by row?
+9. A ref I wrote (for example,
+   scrolling to a cited passage in
+   the Ask Knowledge PDF viewer).
+10. Any satisfies, mapped or
+    conditional types, or .d.ts
+    files I wrote? One "any", "as"
+    or null fix I made.
+11. How are permission keys typed in
+    the Watt and AMP UIs?
+12. API mocks in tests: MSW or
+    vi.mock? One test of mine that's
+    worth describing.
+
+PART B: Jupiter
+13. Ask AI page: how are the answer
+    types modelled? The page's state
+    names? Any error boundary? How
+    does polling stop (clearTimeout,
+    AbortController, a flag)? How
+    are the result table's columns
+    built from the SQL result, and
+    is there a row limit?
+14. Are PnL amounts sent as numbers
+    or strings?
+15. In one sentence, what does the
+    PnL stored procedure compute?
+16. How were the 72 blocking async
+    handlers found (commit, doc)?
+17. When do cached entitlements in
+    session storage refresh, if
+    permissions change mid-session?
+18. Does Jupiter's gateway route
+    allow 180 s streams?
+19. Why do Price & Load overrides
+    use a modal? How are Load Book
+    scenario edits saved?
+20. Live Deal Summary: grouped by
+    what? Tree-data levels on ST
+    Forecast and Load Book?
+21. Who built the integrated charts
+    and the Load Book AG Charts? Any
+    reason recorded for AG Charts?
+22. The DST bug: how was it found,
+    and was the bad conversion in the
+    API or the UI?
+23. Why does CI run only lint, and
+    why was Dexie removed? (commits,
+    PRs or docs)
+24. Does Jupiter send data to Datadog
+    RUM or other frontend telemetry?
+
+PART C: AMP, jobs and Watt
+25. AMP: any class components? The
+    styling approach? What does Dexie
+    store, and how is it kept fresh?
+26. AMP landing page ~10s -> 5s: how
+    was it measured? Any frontend
+    changes? What's in the remaining
+    5 s?
+27. AMP: which screens show deal or
+    position tables? Sorting in the
+    browser or on the server?
+28. KEDA job service: which jobs run
+    on it, typical duration,
+    ScaledJob or ScaledObject?
+29. Watt: how long did onboarding the
+    newest app take (first to last
+    commit)? Which teams use Watt,
+    per the docs?
+30. The Oct 21 strict-ID incident:
+    how was the cause found?
+
+Rules:
+- Read-only. Don't edit, commit, or
+  push.
+- Only state what the code, git
+  history or docs show. Otherwise
+  "unsure".
+- Public-safe: no code, internal URLs,
+  hostnames, secrets, keys, trade or
+  customer data, or people's names
+  (say "another engineer").
+- Plain text, no tables.
+- Answer PART A now. When I say
+  "next", answer PART B; "next"
+  again, PART C.
 ```

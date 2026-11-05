@@ -20,10 +20,11 @@
 - **You, frontend** (about 239 commits across 4 UI repos, Aug–Nov 2026):
   - **Data Validation UI**, mostly yours, including its small hash router
   - **Ask Data UI**: you created it
+  - **Memory** (the newest app, Oct 16 – Nov 2): service and UI `[confirm: did you build Memory?]`
   - part of **Ask Knowledge** (now called Doc Intelligence): uploads, PDF citation highlighting
   - the **admin-kit** package (13 commits), used by 3 apps
   - a fix in the shell's admin sections (expired links)
-  - **68 of the 102** UI test files
+  - **about two-thirds** of the UI test files (65–68 of about 102; the count moves as files change)
 - **Another engineer:**
   - the **shell**: loader, sign-in, app list, failure screens, health checks, Users & access
   - **ui-kit**
@@ -40,7 +41,7 @@ React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL (Microsoft Entra si
   - **Data Intelligence** (Ask Data)
   - **Data Validation**
   - **Memory**: people see and edit what the AI apps remember about them. Super admins can see everyone's.
-- **Users:** a dev/stage script grants 6 users. The production count is unknown. **Don't guess a number.** Say "an internal platform for `[fill in: which teams]`".
+- **Users:** a dev/stage script grants 6 users. The production count is unknown. **Don't guess a number.** No doc names the teams; one spec says "business users". Say "an internal platform for our business users".
 - **Before Watt:** the app list was a file built into the shell. Every signed-in user saw every app, and the app bundles could be downloaded **without signing in**.
 - **Goal** (from your registry design doc): a user sees exactly the apps their AI role grants.
 - **Chat library:** 3 apps adopted it the day after it shipped. Jupiter followed a week later.
@@ -122,7 +123,7 @@ Blob store: versioned mount.js
 - This replaced a registry file built into the shell, where every user got every app.
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3). You wrote the design doc and the server side. Another engineer built the shell's registry code.
-**Likely follow-ups:** "How long does it take to add an app?" `[fill in]` · "What if two apps need different React versions?" (Q4)
+**Likely follow-ups:** "How long does it take to add an app?" → "Under a day for the platform part. Our newest app, Memory, was in the dev and stage registry the same day its service and UI started. Building the app itself took about 17 days." · "What if two apps need different React versions?" (Q4)
 
 ---
 
@@ -329,7 +330,7 @@ This is your strongest full-stack story. You built it.
   - Polled events had no IDs, so clients got some events twice. You numbered every event.
 
 **Your angle:** use this for "Tell me about a production incident."
-**Likely follow-ups:** "How did you find the cause so fast?" `[fill in]` · "What alert would have caught it earlier?"
+**Likely follow-ups:** "How did you find the cause so fast?" → "From the error itself. Every turn returned a 503, and the Redis error said the stream ID couldn't be a complete ID because the uniqueness mode was strict. Production Redis has active geo-replication, which enforces strict IDs by default; dev and stage don't. The Jupiter hotfix went out at 01:54 UTC, the library fix at 02:01, and the hotfix was dropped at 02:08." · "What alert would have caught it earlier?"
 
 ---
 
@@ -351,15 +352,16 @@ This is your strongest full-stack story. You built it.
 
 ### Q14. What would you change if you built it again?  `[P0]`
 **Say this first (~30 sec):**
-> "Three things. First, check app access on every data route, not only the token. Admin routes do it today, data routes don't. Second, validate streamed events against the JSON Schemas we already have. Today the client casts them to the generated types. Third, push permission changes to open tabs. Today they apply on the next reload."
+> "The biggest change would be the agent itself. We set up our own agents. Today I'd host an open-source agent, Hermes Agent, and build our features on top of it. It's widely used and improves faster than a small team could, so we'd maintain less agent code. On the platform side, I'd check app access on every data route, not only the token, and validate streamed events against the JSON Schemas we already have."
 
 **If they dig deeper:**
-- **Pushing changes:** send an "entitlements changed" event, or refetch on window focus and on the first 403.
+- **Give reasons, not "more popular and better":** a big community, built-in memory and skills, many models, and less agent code for us to maintain. **Name the cost:** we'd have to run and upgrade it, and review its security, because it runs tools on our servers.
+- **This role isn't AI-focused.** Keep the agent part to one sentence, then spend your time on the platform changes.
+- **Pushing permission changes:** today they apply on the next reload. Send an "entitlements changed" event, or refetch on window focus and on the first 403.
 - **Apps using their UI-element lists:** a typed hook (Q5). Today only the shell uses them.
 - **Contract tests** between the shell and the apps, with the contract types generated from one schema.
 - **Safe rollback:** add a pin, so a rollback doesn't depend on deleting a blob the immutability policy may protect. And fix the out-of-date architecture doc (Q3).
 - **Write decisions down:** the docs don't record why we chose `import()` over Module Federation. A one-page decision record would help the next engineer.
-- Pick the one you believe in most. `[fill in: your real answer]`
 
 **Likely follow-ups:** "Why didn't you do that the first time?" Honest answer: get apps onto the platform first, then harden.
 

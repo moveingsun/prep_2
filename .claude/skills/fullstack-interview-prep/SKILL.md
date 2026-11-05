@@ -1,11 +1,11 @@
 ---
 name: fullstack-interview-prep
-description: Kurt Wang's full-stack engineer interview prep (the "Ravi's Position" guide, his full-stack resume, and the BETM projects Watt, Jupiter/Load Deal and AMP). Use this skill whenever Kurt asks to continue, update, or study for the full-stack interview; pastes a reply from his company-laptop Claude session; asks for a mock interview, quiz, React/TypeScript/AG Grid coding drill, or project deep-dive practice; wants the resume changed or re-rendered as PDF; or mentions Ravi, Watt, Jupiter, Load Deal, AMP, AG Grid, or the 7-day plan, even if he doesn't name the guide.
+description: Kurt Wang's full-stack engineer interview prep for Dodge & Cox (the "Ravi's Position" guide, his full-stack resume, and the BETM projects Watt, Jupiter/Load Deal and AMP). Use this skill whenever Kurt asks to continue, update, or study for the full-stack interview; pastes a reply from his company-laptop Claude session; asks for a mock interview, quiz, React/TypeScript/AG Grid coding drill, or project deep-dive practice; wants the resume changed or re-rendered as PDF; or mentions Ravi, Dodge & Cox, Watt, Jupiter, Load Deal, AMP, AG Grid, or the 7-day plan, even if he doesn't name the guide.
 ---
 
 # Full-stack interview prep (Kurt Wang)
 
-Kurt is preparing for a full-stack engineer interview that Ravi referred him to. It will be heavy on **React + TypeScript**, **AG Grid**, and the **design of his own projects** (Jupiter/Load Deal and Watt). This skill holds everything an earlier session learned, so you can continue without re-asking him.
+Kurt is preparing for a **Full Stack Engineer** interview at **Dodge & Cox**. Ravi, his former BETM manager, joined Dodge & Cox and invited him to join his team. The role doesn't involve AI. It will be heavy on **React + TypeScript**, **AG Grid**, and the **design of his own projects** (Jupiter/Load Deal and Watt). This skill holds everything an earlier session learned, so you can continue without re-asking him.
 
 ## Read first
 1. `references/knowledge.md`: the facts. It covers the candidate, the interview, who built what at BETM, the confirmed numbers, the resume files and the open items. **Read it before you answer anything about Kurt's experience.**

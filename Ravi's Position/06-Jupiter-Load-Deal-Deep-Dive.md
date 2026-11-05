@@ -4,7 +4,7 @@
 
 > **Why this matters for this role:** You heard that the interview will ask about the design of Load Deal. A project deep dive is where interviewers check that you really built what your resume says. They ask "why" three times in a row. You need a clear 2-minute walkthrough, one diagram you can draw from memory, and honest answers about who built which part.
 
-**Status:** filled from the company-session replies of Nov 3 (git history, design docs, code). A few `[fill in]`s remain.
+**Status:** filled from the company-session replies of Nov 3–4 (git history, design docs, code). The `[fill in]`s left are things only you know.
 
 ## Primer
 
@@ -132,7 +132,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 - **Runtime config:** one Docker image for dev, test and prod; no rebuild per environment.
 
 **Your angle:** [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "Why not TanStack Query?" · "Why remove the browser cache?" `[fill in: the reason isn't in the commit; say what you believe]`
+**Likely follow-ups:** "Why not TanStack Query?" · "Why remove the browser cache?" → "We wanted every request to show what the backend has, because the backend is the source of truth. A PnL can be recomputed or overridden at any time, so a browser copy can go stale. We cache on the server instead, in Redis, keyed by run ID. I did the same on AMP in March: I stopped caching revenue, pricing and volume in the browser."
 
 ---
 
@@ -151,7 +151,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 
 ### Q5. How does the PnL engine work, and how did you prove the numbers?  `[P0]`
 **Say this first (~30 sec):**
-> "The PnL is a stored procedure in Snowflake, run as a background job. `[fill in: one sentence on what it computes, e.g., load × price against forward curves]`. The proof was matching the traders' own workbook. At first it didn't match. I worked with the PM through more than 60 discrepancies, for example a missing forward curve and the loads-through cutoff rule, and wrote each rule down. Moving to a whole-month basis fixed the last group, and all 32 deals matched."
+> "The PnL is a stored procedure in Snowflake, run as a background job. It recomputes the PnL for one deal or all deals for one balance-of-month period, and writes a new run stamped with today's as-of date, in hourly and daily parts. The proof was matching the traders' own workbook. At first it didn't match. I worked with the PM through more than 60 discrepancies, for example a missing forward curve and the loads-through cutoff rule, and wrote each rule down. Moving to a whole-month basis fixed the last group, and all 32 deals matched."
 
 **If they dig deeper:**
 - Whole-month vs cash basis: see the Primer. The endpoint supports both.
@@ -188,7 +188,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 - **This is guide-only, not on the resume.** You decided that on Nov 3. It's still a true story you can tell.
 
 **Your angle:** [S7](../AI%20Engineer/13-Behavioral-Story-Bank.md#s7), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "How did you find the blocking calls?" `[fill in]` · "Why not cache in the browser?" (Q3)
+**Likely follow-ups:** "How did you find the blocking calls?" → "From one production trace. An active-deals request took 4.17 seconds for about 160 ms of work: 140 ms of auth SQL, then a 4-second gap with no span, then a 17 ms cache hit. A heavy PnL request was running on the same pod. One event loop per pod, and async handlers calling sync database, warehouse and Redis code. I changed a handler to plain `def` only if its body had no `await`, and tests now enforce the rule." · "Why not cache in the browser?" (Q3)
 
 ---
 
@@ -197,6 +197,8 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 > "Power data is hourly, labeled by date and hour-ending. The code turned each row into a New York local time. On the fall-back day there are two 1 AM hours, so both became the same instant and one hour disappeared. In spring there's an hour that doesn't exist. I made date, hour-ending and EDT or EST the key for every hourly row, so a day can have 23, 24 or 25 hours. I wrote one helper that turns that key into a fixed-offset time and used it everywhere."
 
 **If they dig deeper:**
+- **How it was found:** a desk user reported a spike in the Hedges line of the ST Forecast chart on the fall-back day. You then did a read-only audit of the whole stack and found that no hour key knew about DST.
+- **Where it was:** both sides. In the API, a `GROUP BY` on time and hour-ending summed the two 1 AM rows (the 2× spike), a parser built times from a drifting hour label, and the load, validator and override keys had no time zone. In the UI, chart points were built from New York wall-clock time.
 - **Charts:** one point per real hour, and tooltips say EDT or EST.
 - **Grids:** a TZ column. **Excel exports** keep both 1 AM rows, sorted by TZ.
 - **Overrides** send the time zone, and the server includes it in the save key.
@@ -221,7 +223,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 - **Cost:** every turn logs its Cortex usage, and an admin endpoint reports the cost in dollars.
 - **History** moved from the browser's local storage to server threads.
 - **The shared chat package** is the Watt chat library you built: a Redis event log, SSE, and resume from the last event ID ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). Jupiter adopted it a week after the Watt apps.
-- **Window size:** Jupiter uses the library default, **40 seconds**, sized for a shorter gateway limit. Watt's AI services use 170 seconds since their gateway allowed 180. If Jupiter's route allows 180 too, raising its window would mean fewer reconnects. `[fill in: does it?]`
+- **Window size:** Jupiter uses the library default, **40 seconds**, sized for a shorter gateway limit. Watt's AI services use 170 seconds since their gateway allowed 180. It doesn't: Jupiter's gateway gives the chat stream a 60-second timeout (unbuffered), so 40-second windows are right. A turn can still run up to its 180-second limit across reconnects.
 - **Agents:** Snowflake Cortex with a semantic view, plus LangGraph with citation checks and a 20-question eval set ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)).
 - You built all of it.
 
@@ -234,7 +236,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 > "The server always enforces access. The middleware checks the JWT and the user's entitlements on every request. In the UI, a protected route checks entitlements before a page renders and sends you to your first allowed page. Entitlements fail closed and are cached per user in session storage. The shared entitlements service is mine: I removed N+1 lookups and made it Redis-first, so a check went from 3–6 seconds to about 10 milliseconds."
 
 **Your angle:** [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "What happens when permissions change mid-session?" `[fill in]`
+**Likely follow-ups:** "What happens when permissions change mid-session?" → Honest: the UI caches entitlements in session storage with no expiry, so a change shows in a new tab or after logout, not on reload. The server checks every request. Your fixes: an empty result is never cached, and you fixed the server cache key (changes used to take up to a day). What you'd add: refetch on a 403, or a short expiry.
 
 ---
 
@@ -270,14 +272,15 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 
 ### Q13. How is Jupiter tested?  `[P1]`
 **Say this first (~30 sec):**
-> "The UI uses Vitest with Testing Library: 25 test files and about 150 cases, and I wrote 17 of those files. They cover the DST helper, chart mappers, exports, the override API, Ask AI, page access rules and PnL warnings. The API uses pytest with about 140 test files, with fakes for Redis and the Snowflake agent, so nothing calls a live service. I made most of the API test commits. One honest gap: CI only runs lint today, so tests run locally. Adding them to CI is my next step."
+> "The UI uses Vitest with Testing Library: 25 test files and about 150 cases, and I wrote 17 of those files. They cover the DST helper, chart mappers, exports, the override API, Ask AI, page access rules and PnL warnings. The API uses pytest with about 140 test files, with fakes for Redis and the Snowflake agent, so nothing calls a live service. I made most of the API test commits. One honest gap: CI runs lint and a type check, but not the tests, so they run locally. Adding them to CI is my next step."
 
 **If they dig deeper:**
+- **CI:** the UI pipeline is yours: `tsc -b --noEmit` and ESLint, both blocking, plus a Docker build. The API pipeline runs ruff lint and format checks, then builds the image. **Neither runs tests.** The repo rule is to run tests locally before each commit.
 - A plan doc records a baseline of 839 passed, 3 skipped.
 - No coverage target is configured.
 - The workbook reconciliation (32/32 deals) was the business acceptance test ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)).
 
-**Likely follow-ups:** "Why doesn't CI run the tests?" `[fill in: honest reason]`
+**Likely follow-ups:** "Why doesn't CI run the tests?" → "When I created the UI pipeline in July, the repo had no tests yet. Vitest came in September and wasn't added to CI. The API pipeline never ran pytest. It's a gap, and a small change to fix."
 
 ---
 
@@ -293,7 +296,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 
 ### Q15. What would you change if you built it again?  `[P0]`
 **Say this first (~30 sec):**
-> "Four things. Generate TypeScript types from the FastAPI OpenAPI schema, instead of writing them by hand. Run the tests in CI, not only lint. Put validation errors in the same envelope, and make failed uploads roll back cleanly. And show recompute progress in the UI instead of asking users to reload."
+> "Four things. Generate TypeScript types from the FastAPI OpenAPI schema, instead of writing them by hand. Run the tests in CI, not only lint and the type check. Put validation errors in the same envelope, and make failed uploads roll back cleanly. And show recompute progress in the UI instead of asking users to reload."
 
 **If they dig deeper:** pick one, and give the cost and the benefit. For example, codegen costs one CI step and catches contract breaks at build time.
 
@@ -304,6 +307,8 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 ### Q16. How did you work with the frontend engineer?  `[P1]`
 **Say this first (~30 sec):**
 > "When my manager left, I led the frontend engineer and two other contractors day to day. Every evening I wrote down what to build next, why, and what 'done' means. In the morning we had a short check-in, and I reviewed their PRs: 26 on Jupiter. For PnL Summary we split the work: I did the API and data layer, and they added the month toggle, run picker, cash view and Recompute button."
+
+- **The manager in this story is Ravi.** Tell it as continuity: "When Ravi left BETM, I kept his three projects moving day to day." He saw it, so he can back it up. Never suggest the team was left in trouble.
 
 **Your angle:** [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1).
 **Likely follow-ups:** "Give an example of PR feedback you gave." `[fill in]`

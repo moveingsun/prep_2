@@ -9,7 +9,7 @@
 ### Your honest full-stack position
 - **You are a backend-heavy full-stack engineer who writes production React + TypeScript.** Say it with confidence. The git history backs it up.
 - **Frontend you wrote yourself (from git history, 2026):**
-  - **Watt** (React 19, TS, Vite, Tailwind): about 239 commits across 4 UI repos, Aug–Nov. You built the **Data Validation UI** (rules, run history, monitors, chat pages) and **Ask Data UI** (you created it). You also built part of **Ask Knowledge** (uploads, PDF citation highlighting), the shell's **Admin tab**, and a shared **admin-kit** package used by 3 apps. You wrote **68 of the 102** UI test files.
+  - **Watt** (React 19, TS, Vite, Tailwind): about 239 commits across 4 UI repos, Aug–Nov. You built the **Data Validation UI** (rules, run history, monitors, chat pages) and **Ask Data UI** (you created it). You also built part of **Ask Knowledge** (uploads, PDF citation highlighting), the shell's **Admin tab**, and a shared **admin-kit** package used by 3 apps. You wrote **about two-thirds** of the UI test files.
   - **Jupiter** (React 19, TS, AG Grid): the **Ask AI chat page** (job polling, answers shown as SQL, tables and charts, history). You also moved **PnL Summary** from mock data to the live API, built **Portfolio PnL history** and the **Admin usage tab**, and fixed **daylight-saving bugs** in charts, grids and Excel exports.
   - **AMP** (React 18, TS, AG Grid, ECharts): the asset dashboard's **price and volume tabs**, filters and widgets, the **outage-management forms**, the admin forms for users and service principals, and **entitlement-based access checks**.
   - **Earlier:** custom **Backstage plugins in TypeScript** at Wayfair, the **beta Kronos UI** (Wayfair co-op), and Java UI components at Cerner.
@@ -39,7 +39,7 @@
 **If they dig deeper:**
 - Slow down on the numbers: 3 hours a day, 10 to 5 seconds.
 - Stop after "what the user sees." Let them pick the thread.
-- Keep AI to one sentence unless the role is AI-related. `[fill in: does this role involve AI?]`
+- Keep AI to one sentence: this role doesn't involve AI today.
 
 **Your angle:** [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14), [S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8), [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
 **Likely follow-ups:** "Tell me about the AMP UI" (Q3) · "How much React have you written?" (Q2) · "Walk me through Jupiter" ([06](06-Jupiter-Load-Deal-Deep-Dive.md)).
@@ -55,7 +55,7 @@
   - **The Ask AI polling:** every 2 seconds, then every 5 after 30 seconds, stopping at 10 minutes or after 3 failures in a row ([06 Q9](06-Jupiter-Load-Deal-Deep-Dive.md)).
   - **The DST bug:** two 1 AM hours collapsed into one instant. The fix keys every hourly row by date + hour-ending + EDT/EST ([06 Q8](06-Jupiter-Load-Deal-Deep-Dive.md)).
 - Your stack: React 18/19, TypeScript, Vite (and Create React App on AMP), Tailwind, React Router, hooks and Context (**no Redux**), AG Grid, Recharts / ECharts / Vega-Lite, MSAL, Vitest + Testing Library.
-- If asked "why no state library?": server data lives in the API and is fetched per page. Shared client state is small (the user, permissions, theme), so Context is enough. `[fill in: confirm how Watt apps fetch and cache data]`
+- If asked "why no state library?": server data lives in the API and is fetched per page. Shared client state is small (the user, permissions, theme), so Context is enough. Confirmed: Watt apps use plain `fetch` (no axios, SWR or React Query), build their headers from the shell's `getAuthToken`, set timeouts with `AbortSignal`, and cache only in memory. Most Watt apps have no Context at all: they get the user and token from the shell's host object.
 - If asked to rate yourself, say a number and a reason: "About 7 out of 10 on React. Strong on hooks, data-heavy pages, typed APIs and testing. Less experience with SSR, Next.js and design systems."
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1), [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14).
@@ -80,10 +80,12 @@
 
 ### Q4. Why a full-stack role? Why this company?  `[P0]`
 **Say this first (~30 sec):**
-> "I already work across the stack, and the work I enjoy most is owning a feature all the way to the user. On AMP, the users only saw the UI. They didn't care how fast my API was if the page still felt slow. I want a role where that whole path is my job. And `[fill in: one specific reason about this company or team]`."
+> "I already work across the stack, and the work I enjoy most is owning a feature all the way to the user. On AMP, the users only saw the UI. They didn't care how fast my API was if the page still felt slow. I want a role where that whole path is my job. And Ravi, my manager at BETM, is building this team. I liked working for him, and he invited me to join."
 
 **If they dig deeper:**
-- `[fill in: what you know about the company, its product, and the team]`
+- **Dodge & Cox:** an investment manager in San Francisco, founded in 1930. It's **100% employee-owned** and manages about **$465 billion** (March 2026). It's known for long-term value investing, decided by teams, not one star manager. Its funds include the Stock, International Stock, Global Stock and Global Bond funds.
+- **Why your experience fits:** finance data in the browser. Grids of positions and PnL, Excel exports, time series, and numbers that must match to the cent (your PnL reconciliation, [S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)).
+- `[fill in: what Ravi told you about the team and its product]`
 - Don't say "I want to leave AI" or "I'm tired of backend." Say what you want *more* of.
 
 **Your angle:** [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14).
@@ -98,6 +100,7 @@
 **If they dig deeper:**
 - What was in a spec: endpoints, request and response types, error cases, loading states, permission rules. A real one: the registry design doc. Goal: a user sees exactly the apps their role grants. Rule: an app that isn't fully configured returns 503, never a half-built entry ([07 Q7](07-Watt-AI-Platform-Deep-Dive.md)).
 - How you handled a spec change mid-build. `[fill in]`
+- **The manager in this story is Ravi.** Tell it as continuity: "When Ravi left BETM, I kept his three projects moving day to day." He saw it, so he can back it up. Never suggest the team was left in trouble.
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1).
 **Likely follow-ups:** "Give an example of a disagreement with a frontend engineer." `[fill in: C1]`
@@ -110,7 +113,7 @@
 
 **If they dig deeper:**
 - Say clearly that it was mostly backend work. Then add what you'd also do on the frontend today: skeleton screens, code splitting, caching with TanStack Query, and measuring with Core Web Vitals.
-- `[fill in: any frontend change you made, e.g., fewer requests, lazy loading]`
+- Frontend changes you made: PnL Summary gets its 17 visuals from **one** endpoint shaped for the screen; Vega-Lite is lazy-loaded on Ask AI; the current-hour check no longer builds a `Date` per grid cell ([08 Q11](08-AG-Grid.md)).
 
 **Your angle:** [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
 **Likely follow-ups:** "How did you measure it?" · "What's the slowest part now?"
@@ -119,7 +122,7 @@
 
 ### Q7. Have you used Next.js / Redux / GraphQL / a design system?  `[P1]`
 **Say this first (~30 sec):**
-> "Not in production. `[fill in: what you did use]`. I know the trade-offs: `[one line on the tool]`. I've picked up new tools quickly before. For example, I built Load Deal AI with LangGraph and Snowflake Cortex in three weeks."
+> "Not in production. My apps are client-rendered React SPAs on Vite, or Create React App on AMP. They use React Context instead of Redux, and REST instead of GraphQL. I know the trade-offs: Next.js adds server rendering and routing, which matters most for public pages; for internal apps behind sign-in, a SPA is usually enough. I've picked up new tools quickly before. For example, I built Load Deal AI with LangGraph and Snowflake Cortex in three weeks."
 
 **If they dig deeper:**
 - Use this pattern for any tool you haven't used: **honest "no" → what you used instead → the trade-off → how you'd ramp up.**
@@ -132,11 +135,11 @@
 
 ### Q8. Why are you leaving after about 16 months?  `[P1]`
 **Say this first (~30 sec):**
-> `[fill in: your real reason, said positively]`. A safe shape: "I've learned a lot. I own big systems and I've shipped real impact. But I'm on a very small team, so I've hit the limit of what one person can do. I want to grow on a stronger engineering team, with more frontend work."
+> "Ravi was my manager at BETM. He joined Dodge & Cox and invited me to join his team. I trust how he runs a team, and the role has more frontend work, which is what I want next. I've learned a lot at BETM, and I'd like to keep growing with him on a bigger engineering team."
 
 **If they dig deeper:**
 - Never criticize BETM or your manager.
-- If your manager's resignation is part of the reason, say it neutrally: "My manager left, and that changed the team."
+- Ravi's move is the real reason, and it's a positive one. Don't add complaints about BETM.
 
 **Your angle:** [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14), [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1).
 **Likely follow-ups:** "What are you looking for in your next team?"
@@ -145,3 +148,4 @@
 - [Behavioral Story Bank](../AI%20Engineer/13-Behavioral-Story-Bank.md): the full STAR stories behind every "Your angle" link.
 - [AI Engineer guide, 01 · Role & Pitch](../AI%20Engineer/01-Role-Company-and-Your-Pitch.md): the longer pitch and the honest framing of gaps.
 - [AI Engineer guide, 15 · Self-introduction](../AI%20Engineer/15-Final-Day-Cheat-Sheet.md): the AI version of the pitch, with delivery tips that also apply here.
+- [Dodge & Cox (Wikipedia)](https://en.wikipedia.org/wiki/Dodge_%26_Cox) and the [Dodge & Cox firm fact sheet](https://www.dodgeandcox.com/content/dam/dc/ww/en/pdf/fact-sheets/Dodge_Cox_Worldwide_Firm_Fact_Sheet.pdf): founded 1930, employee-owned, about $465B under management (Q4).

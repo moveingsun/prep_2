@@ -160,6 +160,7 @@ Tip: open with a one-line headline ("This is about a 10× cost spike I tracked d
 - **Result:** `[fill in: what shipped in those two months (did the PnL release in Aug 2026 fall in this window?), and one contractor who became more independent. What could they do at the end that they couldn't at the start?]`
 - **Lesson:** `[adjust to your real lesson]` "Clear written instructions were what made it work across time zones. If the goal and the reason were written down, they could make good decisions without waiting for me."
 - **How to say it honestly:** "I led their work day to day." Don't say "I was their manager" unless you also handled hiring, performance, or contracts.
+- **For the Dodge & Cox interview:** the manager in this story is **Ravi**, who now leads the team there. Tell it as continuity: you kept his projects moving after he left BETM. Never suggest the team was left in trouble.
 - **Use for:** mentoring, the "no lead title" question, mentoring while coding 40–50% of the time, delegation, working with offshore teams.
 
 <a id="c1"></a>

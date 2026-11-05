@@ -1,6 +1,8 @@
 # Full-Stack Engineer: Interview Prep Index
 
-**Target:** full-stack engineer interview, about **Tue Nov 10, 2026** `[fill in: company, role title, exact date, interviewers]`
+**Target:** **Full Stack Engineer** at **Dodge & Cox**, about **Tue Nov 10, 2026**. Ravi, your former manager at BETM, joined Dodge & Cox and invited you to interview for his team. The role doesn't involve AI today. `[fill in: exact date, format, interviewers]`
+
+> **Ravi is on your side.** He knows your BETM work and wants you on his team. The other interviewers don't know it yet, so give them the clear, exact version: the same story Ravi would tell about you.
 
 **What you heard:** heavy on **React + TypeScript** and **AG Grid** (Ravi), plus the **design of Load Deal (Jupiter) and Watt**.
 

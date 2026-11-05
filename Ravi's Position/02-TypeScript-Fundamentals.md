@@ -32,7 +32,7 @@
 - **TypeScript 7.1** is in **beta** (Oct 20, 2026). Its big addition is a new programmatic API. Until it ships, tools that embed the compiler (typescript-eslint, Vue/Svelte/Astro editor tooling) still run on 6.0 through the `@typescript/typescript6` package.
 - **Node.js runs `.ts` files directly** by stripping the types (stable since Node v25.2.0 and v24.12.0). It only supports "erasable" syntax, so no `enum` and no `namespace` with code. The TS flag `erasableSyntaxOnly` enforces the same rule.
 
-**If asked:** "TS 7 is the Go port: same type system, about ten times faster builds. 6.0 was the bridge release that made `strict` the default." `[fill in: which TS version Watt and Jupiter are on today]`
+**If asked:** "TS 7 is the Go port: same type system, about ten times faster builds. 6.0 was the bridge release that made `strict` the default." Today **Watt is on TypeScript 6.0.3** and **Jupiter on 5.8.3**. Neither is on 7 yet.
 
 ### What you know → TypeScript
 
@@ -99,7 +99,7 @@ import type { Deal } from "./api";
 - **A few features do generate code:** `enum`, `namespace`, and constructor parameter properties. That is why Node's type stripping and `erasableSyntaxOnly` reject them.
 - **Version:** TS 7 (July 2026) is the Go port, about 10× faster builds, same type system.
 
-**Your angle:** Bridge from what you know. "Java checks types at compile time and keeps them at runtime. Python keeps runtime types but only checks hints with a tool like mypy. TypeScript checks at compile time and keeps nothing at runtime. So at the edges of the app I validate, like Pydantic does in Python." Then make it concrete: "I write TypeScript every week on our Watt and Jupiter UIs, both React 19 with Vite." `[fill in: is strict on in the Watt and Jupiter tsconfig?]`
+**Your angle:** Bridge from what you know. "Java checks types at compile time and keeps them at runtime. Python keeps runtime types but only checks hints with a tool like mypy. TypeScript checks at compile time and keeps nothing at runtime. So at the edges of the app I validate, like Pydantic does in Python." Then make it concrete: "I write TypeScript every week on our Watt and Jupiter UIs, both React 19 with Vite." Jupiter has `strict` on. In Watt, Ask Data, Data Validation, Memory and the shared packages set `strict: true`. The shell and Doc Intelligence don't set it, so TS 6's default (on) applies.
 **Likely follow-ups:** "Then why use it?" (refactoring safety, editor help, contracts between teams) · "How do you validate API data?" (Q16)
 
 ---
@@ -122,7 +122,7 @@ import type { Deal } from "./api";
 - **Performance:** the TypeScript team's performance guide prefers interfaces over large intersections, because the checker caches interface relationships. This only matters in very large codebases.
 - **The handbook's heuristic** is "use `interface` until you need features from `type`". Many React codebases do the opposite. Being consistent matters more than the choice.
 
-**Your angle:** A senior answer picks a rule and gives the reason. Use the codebases you work in: `[fill in: do Watt and Jupiter use type or interface for props? Is it enforced by lint?]`
+**Your angle:** A senior answer picks a rule and gives the reason. Use the codebases you work in: Watt's named props are almost always `interface` (about 70 to 3), and many components type props inline. Jupiter is mixed (about 38 `type`, 30 `interface`). No lint rule enforces either. Your rule: "`interface` for props and objects others extend, `type` for unions. I'd add the `consistent-type-definitions` lint rule, so it isn't a debate in review."
 **Likely follow-ups:** "Can an interface extend a type?" (yes, if the type is an object shape) · "When is declaration merging useful?" (adding fields to `Window` or a library type)
 
 ---
@@ -148,7 +148,11 @@ type X = string & number;  // never
 - **As sets of values:** `unknown` = all values (top type). `never` = no values (bottom type). `any` = "switch off the checker", which is why it's unsafe.
 - **In code review:** flag new `any`. Ask for `unknown` plus narrowing, or a real type. The lint rule is `@typescript-eslint/no-explicit-any`.
 
-**Your angle:** In [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1) you reviewed the frontend contractors' pull requests, and you write UI code and tests yourself. If it's true, give one real example. `[fill in: an any, as, or missing null check you flagged in review or fixed in your own code]`
+**Your angle:** In [M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1) you reviewed the frontend contractors' pull requests, and you write UI code and tests yourself. If it's true, give one real example. Two real fixes of yours:
+- **Data Validation (Sept 5):** a description patch typed `string | null` became `string`, because the service ignores `null`. Clearing now sends an empty string. The edit modal also stopped re-sending a seeded `null` owner that wiped the owner.
+- **Jupiter (Sept 1):** a fallback month that wasn't in the list gave a `null` report month. It now uses the server's default month.
+- **If asked about `any`:** Jupiter still has about 316, and lint only warns. "I'd make it an error for new code, and remove the old ones feature by feature."
+
 **Likely follow-ups:** "When is `any` acceptable?" (during a JS-to-TS migration, with a comment and a ticket) · "`void` vs `never`?" (`void` returns nothing useful; `never` never returns at all)
 
 ---
@@ -273,7 +277,7 @@ function assertNever(x: never): never {
 - **Same pattern elsewhere:** `useReducer` actions (`{ type: "add" } | { type: "remove"; id: string }`), API results, and zod's `safeParse` result (`{ success: true; data } | { success: false; error }`).
 - **Watch out for backend enums:** if the backend adds a new status before the frontend updates, the runtime value matches no case. Handle unknown values at the boundary (Q16, Q18).
 
-**Your angle:** You have two real examples. On Jupiter you built the Ask AI chat page ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)): it polls a job, and an answer can be SQL, a table, or a chart. Both the job state and the answer type are natural discriminated unions. On Watt, the Data Validation UI shows run history, and runs have statuses too. `[fill in: the real state names, and how you typed the answer variants]` Use these instead of a made-up example.
+**Your angle:** You have two real examples. On Jupiter you built the Ask AI chat page ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)): it polls a job, and an answer can be SQL, a table, or a chart. Both the job state and the answer type are natural discriminated unions. On Watt, the Data Validation UI shows run history, and runs have statuses too. The first version kept one result object with **parallel arrays** (text, SQL, tables, Vega-Lite charts), not a tagged union. Errors were a code and a message, switched on the code: cancelled, disabled, timeout. State: the context held conversations, activeId, agent, threadsLoading, loadState and serviceDisabled; the job hook held phase, jobId, progress and startedAt. The chat-kit version uses **parts tagged by kind** (sql, table, chart, suggestions). That's the discriminated union, and it's how you'd model it today. Use these instead of a made-up example.
 **Likely follow-ups:** "Model this with `useReducer`." (see [03 · React Fundamentals](03-React-Fundamentals.md)) · "How does `assertNever` help at runtime?" (it throws with the bad value, so you see it in logs)
 
 ---
@@ -323,7 +327,7 @@ type ApiResponse<T = unknown> = {
 - **Newer tools:** `const` type parameters (TS 5.0) infer literal types: `<const T>(x: T)`. `NoInfer<T>` (TS 5.4) stops inference from one argument.
 - **Java/Python:** same idea as Java's `<T extends Comparable<T>>` and Python's `TypeVar` with a `bound`. Like Java, type arguments are erased at runtime. Unlike Java, matching is structural.
 
-**Your angle:** Shared packages are where generics really pay off. On Watt you built a shared admin-kit package that 3 apps use ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)). `[fill in: any generic component or hook in admin-kit, e.g., a table, form, or data hook typed by row]` A typed API client, `get<T>(path, schema)`, is the other classic example.
+**Your angle:** Shared packages are where generics really pay off. On Watt you built a shared admin-kit package that 3 apps use ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)). In admin-kit the tables take concrete row types. The one generic is `withShares<T>`, which returns `T` plus a share field. In Jupiter you wrote `useVisual<T>`, which returns one visual's rows from the PnL context, and a generic `Envelope<T>` for API responses. A typed API client, `get<T>(path, schema)`, is the other classic example.
 **Likely follow-ups:** "Write a generic hook." (practice in [04 · React Coding Exercises](04-React-Coding-Exercises.md)) · "What does `K extends keyof T` mean?" (K must be one of T's key names, Q8)
 
 ---
@@ -349,7 +353,7 @@ type Config = typeof config;
 - **Gotcha:** for `{ [k: string]: number }`, `keyof` gives `string | number`, because JavaScript turns number keys into strings.
 - **Why it matters:** add `"cancelled"` to the array and the `Status` type, the dropdown options, and the exhaustive `switch` checks all update together.
 
-**Your angle:** Any fixed list in your UIs works. `[fill in: e.g., rule or monitor types in the Data Validation UI, or tab names on the AMP asset dashboard]`
+**Your angle:** Any fixed list in your UIs works. Real example: `MonitorKind = 'pipeline' | 'dataset'` in Data Validation, plus two discriminated unions, one on `kind` and one on `type`. Honest gap: check type and severity are still plain strings.
 **Likely follow-ups:** "What's `keyof typeof obj`?" (the key names of a runtime object; common with `as const` objects, Q11)
 
 ---
@@ -397,7 +401,7 @@ type Loaded = Awaited<ReturnType<typeof loadDeals>>;
   - `Omit` on a union type does not apply to each member, so a discriminated union loses its variants.
 - **Under the hood:** `Partial<T>` is just `{ [K in keyof T]?: T[K] }` (Q10).
 
-**Your angle:** You built real create and edit forms: rules and monitors in the Watt Data Validation UI, and the outage-management and admin forms on AMP. That is where `Omit` and `Partial` pay off. `[fill in: how you typed the create vs edit payloads in one of them]`
+**Your angle:** You built real create and edit forms: rules and monitors in the Watt Data Validation UI, and the outage-management and admin forms on AMP. That is where `Omit` and `Partial` pay off. In Data Validation, edits use hand-written patch interfaces where every field is optional, and the form sends only the fields that were touched. That's `Partial` written by hand. There's no create type, because rules are created through chat.
 **Likely follow-ups:** "Implement `Partial` yourself." (Q10) · "`Exclude` vs `Omit`?" (`Exclude` removes members of a union; `Omit` removes keys of an object)
 
 ---
@@ -438,7 +442,7 @@ type Loaded = Awaited<ReturnType<typeof loadDeals>>;
 - **Template literal types:** `` `on${Capitalize<"click">}` `` is `"onClick"`. Useful for event names and route strings.
 - **Use sparingly:** complex type-level code is hard for teammates to read and slows the checker.
 
-**Your angle:** Honest framing, if it's true for you: "I'm comfortable reading these and I've written simple ones. In app code I prefer plain, clear types over clever ones." `[fill in: a mapped or conditional type you actually wrote, if any]`
+**Your angle:** Honest framing, if it's true for you: "I'm comfortable reading these and I've written simple ones. In app code I prefer plain, clear types over clever ones." That's true for you: the conditional types in your repos are another engineer's. Yours are simpler: unions, type guards, a generic `Envelope<T>`, a `Record` keyed by conversation kind, and an intersection type.
 **Likely follow-ups:** "Write `DeepPartial<T>`." (`{ [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] }`) · "What does `infer` do?" (captures part of a type for use in the true branch)
 
 ---
@@ -475,7 +479,7 @@ type Loaded = Awaited<ReturnType<typeof loadDeals>>;
 - **Enum upsides:** a named runtime object, and some teams like the `Status.Draft` style.
 - **Other fixes for widening:** an explicit annotation (`const req: { method: Method }`) or `satisfies` (Q12).
 
-**Your angle:** Permission keys are a good example, and you built the UI side yourself: entitlement-based access checks on AMP, and the Admin tab in the Watt shell. Both sit on the shared entitlements service ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). A union like `"deal:edit" | "deal:view"` catches typos at compile time. `[fill in: how permission keys are typed in the AMP and Watt UIs]`
+**Your angle:** Permission keys are a good example, and you built the UI side yourself: entitlement-based access checks on AMP, and the Admin tab in the Watt shell. Both sit on the shared entitlements service ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). A union like `"deal:edit" | "deal:view"` catches typos at compile time. Honest answer: they're **plain strings** everywhere. Watt compares paths to constants, and privilege (lowercased) to "admin". AMP checks privilege strings against Read, Write and Admin. Jupiter matches the path case-insensitively. Yours: the shell's admin-path helper, and on AMP the switch to the Entra object ID and a case-insensitive type code. What you'd do: a literal union or an `as const` object of keys, so a typo fails the build.
 **Likely follow-ups:** "Type of `["a", "b"] as const`?" (`readonly ["a", "b"]`) · "Can you loop over a union at runtime?" (no; start from an `as const` array, Q8)
 
 ---
@@ -508,7 +512,7 @@ type Page = keyof typeof b; // "home" | "deals"
 - **Reasonable uses of `as`:** `as const`, test fixtures, and a value that was just validated. For DOM elements, `instanceof HTMLInputElement` is safer than `as`.
 - **Combined:** `as const satisfies Record<string, Route>` gives readonly literals *and* a check.
 
-**Your angle:** Config objects are where `satisfies` fits best: route tables, feature flags, chart settings. Watt and Jupiter use React Router, Recharts, and Vega-Lite, which all take config objects. `[fill in: a route table or chart config in your code where satisfies fits, or already used]`
+**Your angle:** Config objects are where `satisfies` fits best: route tables, feature flags, chart settings. Watt and Jupiter use React Router, Recharts, and Vega-Lite, which all take config objects. You've used it once, in a test: a fake host object `satisfies AppHost`. The test object is checked against the real contract but keeps its exact type.
 **Likely follow-ups:** "What's the `!` operator?" (an `as` for null: "not null, trust me"; same risks) · "When is `as` unavoidable?" (some generic code where TS can't follow the logic)
 
 ---
@@ -578,7 +582,7 @@ console.log(pos.book.name);     // (4)
 - **Non-null assertion:** `pos.book!.name` compiles but crashes if `book` is missing. Prefer a check.
 - **Optional vs `| undefined`:** `book?: X` means the key may be missing. `book: X | undefined` means the key must exist but may hold `undefined`. The `exactOptionalPropertyTypes` flag enforces the difference.
 
-**Your angle:** In trading data, `0` is a real value. A zero volume or zero PnL is not "missing", and `value || default` would silently replace it. You built PnL screens on Jupiter (PnL Summary on the live API, Portfolio PnL history) on top of your PnL engine ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)), so this shows you think about data correctness, not just syntax. `[fill in: a real null-vs-zero case you handled, if any]`
+**Your angle:** In trading data, `0` is a real value. A zero volume or zero PnL is not "missing", and `value || default` would silently replace it. You built PnL screens on Jupiter (PnL Summary on the live API, Portfolio PnL history) on top of your PnL engine ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)), so this shows you think about data correctness, not just syntax. Real case: in your PnL API, `null` means "not computed" and is never sent as 0. So the UI must check for null (`??` or `=== null`), never `||`, or a real 0 PnL would show as missing. A second one: in Data Validation the service ignored `null`, so "clear the description" did nothing. You changed the type to `string` and send `''` to clear it.
 **Likely follow-ups:** "`null` vs `undefined` in practice?" (JSON and APIs use `null`; JS uses `undefined` for missing; pick one convention per API) · "Why not turn strict off?" (you lose the main benefit of TypeScript)
 
 ---
@@ -618,7 +622,7 @@ console.log(pos.book.name);     // (4)
 - **TS 6/7 changes to know:** `types` now defaults to `[]`, so list the global types you need (`"node"`, `"vite/client"`). `baseUrl`, `moduleResolution: "node"`, and `target: "es5"` are errors in 7.0.
 - **Moving a JS codebase to TS:** `allowJs`, convert file by file, be strict on new code, and use `// @ts-expect-error` (not `@ts-ignore`), which itself errors once the problem is fixed.
 
-**Your angle:** You work with both build styles. Watt and Jupiter use Vite, so the type check must run as its own step: `[fill in: does CI run tsc --noEmit or tsc -b?]`. AMP uses Create React App, which the React team deprecated for new apps in Feb 2025, so moving it to Vite is a good "what would you improve?" answer. If strict is off anywhere: "I'd turn it on gradually, folder by folder, and track the error count down to zero."
+**Your angle:** You work with both build styles. Watt and Jupiter use Vite, so the type check must run as its own step: Jupiter's CI runs `tsc -b --noEmit` and ESLint, both blocking. You own that pipeline, and you made ESLint blocking. Watt's app builds start with `tsc -b`. AMP uses Create React App, which the React team deprecated for new apps in Feb 2025, so moving it to Vite is a good "what would you improve?" answer. If strict is off anywhere: "I'd turn it on gradually, folder by folder, and track the error count down to zero."
 **Likely follow-ups:** "Does your build type-check?" (Vite doesn't; run `tsc --noEmit` or `tsc -b` in CI) · "What's `skipLibCheck`?" (skip checking `.d.ts` files in `node_modules`; faster builds)
 
 ---
@@ -718,7 +722,7 @@ function Card({ title, children }: CardProps) {
   In a `.tsx` file, a generic *arrow* function needs `<T,>` so the parser doesn't read it as JSX.
 - **`React.FC`:** fine to use, but most teams type props on the parameter directly. Since React 18's types, `FC` no longer adds `children` for you.
 
-**Your angle:** You have many real components to choose from: the Data Validation pages and the Ask Data UI (which you created) on Watt, uploads and PDF citation highlighting in Ask Knowledge, and the Ask AI chat page on Jupiter. Watt uses hooks and context with no state library, so typed context is a real example for you. You also wrote 68 of Watt's 102 UI test files (Vitest + Testing Library). `[fill in: one component, and how its props, state, and refs were typed]` More React depth: [03 · React Fundamentals](03-React-Fundamentals.md). Practice: [04 · React Coding Exercises](04-React-Coding-Exercises.md).
+**Your angle:** You have many real components to choose from: the Data Validation pages and the Ask Data UI (which you created) on Watt, uploads and PDF citation highlighting in Ask Knowledge, and the Ask AI chat page on Jupiter. Watt uses hooks and context with no state library, so typed context is a real example for you. You also wrote about two-thirds of Watt's UI test files (Vitest + Testing Library). Two good ones: the **Doc Intelligence PDF viewer** (one ref for the `div` pdf.js draws into, one for the PDF controller, destroyed on unmount), or the **Data Validation edit modal** (controlled `useState` fields, and a patch type that sends only touched fields). More React depth: [03 · React Fundamentals](03-React-Fundamentals.md). Practice: [04 · React Coding Exercises](04-React-Coding-Exercises.md).
 **Likely follow-ups:** "How do you type a custom hook's return?" (an object, or a tuple with `as const`) · "How do you type context?" (`createContext<Value | null>(null)` plus a hook that throws if the value is `null`)
 
 ---
@@ -751,9 +755,9 @@ build fails if the UI breaks
 - **Errors are part of the contract:** type the error body too (for example, FastAPI's `422` validation error shape), so the UI can show field-level messages.
 
 **Your angle:** This is your best full-stack story, because you work on both sides of the contract.
-- **Watt:** you designed the chat API contract (SSE streaming over Redis) that the shared chat-kit package runs on, then built UIs on top of it yourself ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)). `[fill in: how the event types are defined on the TS side]`
-- **Jupiter:** the backend is FastAPI, which is exactly the diagram above. You moved PnL Summary from mock data to the live API ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)). `[fill in: are the TS types generated from FastAPI's OpenAPI or written by hand? Are PnL amounts sent as numbers or strings?]`
-- **Datetimes:** you fixed daylight-saving bugs across Jupiter's charts, grids, and Excel exports. That is the "datetime crosses the boundary" problem in real life. `[fill in: the root cause and the fix]`
+- **Watt:** you designed the chat API contract (SSE streaming over Redis) that the shared chat-kit package runs on, then built UIs on top of it yourself ([S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)). On the TS side, chat-kit's event types are **generated from the JSON Schemas** your Python library exports: start, status, delta, part, final, error, reconnect, done.
+- **Jupiter:** the backend is FastAPI, which is exactly the diagram above. You moved PnL Summary from mock data to the live API ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)). Jupiter's TS types are **written by hand** (no OpenAPI codegen); you'd generate them in CI. PnL amounts are **numbers** both ways; `null` means "not computed", never 0. Only Ask AI tables arrive as strings.
+- **Datetimes:** you fixed daylight-saving bugs across Jupiter's charts, grids, and Excel exports. That is the "datetime crosses the boundary" problem in real life. Root cause, on both sides: in the API, a `GROUP BY` on time and hour-ending summed the two 1 AM rows (a 2× spike); in the UI, chart points were built from New York wall-clock time, so both 1 AM hours merged. Fix: key every hourly row by date + hour-ending + EDT/EST, with one helper that turns the key into a fixed-offset time ([06 Q8](06-Jupiter-Load-Deal-Deep-Dive.md)).
 - **Deep dives:** [06 · Jupiter Load Deal](06-Jupiter-Load-Deal-Deep-Dive.md) and [07 · Watt AI Platform](07-Watt-AI-Platform-Deep-Dive.md).
 
 **Likely follow-ups:** "What if the backend has no spec?" (write zod schemas on the frontend as the contract, and add contract tests) · "How do you ship a breaking API change with no downtime?" (expand-and-contract, versioning, feature flags)
@@ -791,7 +795,7 @@ build fails if the UI breaks
 - **TS 6/7 note:** `types` defaults to `[]`, so global packages like `@types/node` must be listed in `tsconfig`.
 - **Library authors:** `declaration: true` makes `tsc` emit `.d.ts` files, and `package.json` points to them through `"types"` or `"exports"`.
 
-**Your angle:** At Wayfair you wrote custom Backstage plugins in TypeScript. Today, Watt and Jupiter use Vite, which ships its own client types (`vite/client`). `[fill in: any library you had to declare types for, e.g., a chart or PDF library]` If none, say so: "Beyond `@types` packages, I haven't needed to."
+**Your angle:** At Wayfair you wrote custom Backstage plugins in TypeScript. Today, Watt and Jupiter use Vite, which ships its own client types (`vite/client`). You wrote a few `.d.ts` declarations: one for a build-time API-scope constant, and Memory's CSS and version declarations. If none, say so: "Beyond `@types` packages, I haven't needed to."
 **Likely follow-ups:** "`@types/x` vs types bundled in the package?" (bundled types are released with the code, so they stay in sync)
 
 ---

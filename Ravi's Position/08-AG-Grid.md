@@ -214,7 +214,7 @@ Jupiter uses Enterprise features: tree data, row grouping, set filters, cell sel
 - Say clearly what you built and what you reviewed:
   - **Built:** the DST fix (Q14). Every hourly row is now keyed by date + hour ending + EDT/EST, so a day can have 23, 24 or 25 rows. The grids got a TZ column. Excel exports keep both 1 AM rows on the fall-back day, sorted by TZ.
   - **Built:** the **Portfolio PnL Flash Table** rewrite (Oct 22, 2026): a month accordion, pinned month rows, YTD, custom headers, and a row model with tests.
-  - **Built:** the Ask AI result table and the Admin usage panel (Sep 2026) (Q22). `[fill in: how your code builds the column defs from the SQL result]`
+  - **Built:** the Ask AI result table and the Admin usage panel (Sep 2026) (Q22). Fields are named `c0`, `c1`… because dots in SQL column names break AG Grid's field paths (`suppressFieldDotNotation` is the other fix). A column is a measure when every value is numeric and at least one has a fraction; measures get 2 decimals, and IDs stay as they are.
   - **Built:** the PnL Summary grid sizing and data wiring (Jul–Aug 2026), and the ARR/MLC forecast labels and tooltips.
   - **Reviewed:** most other Jupiter grids (you approved 26 PRs). `[fill in: one real thing you caught in a grid PR]`
   - **AMP** (Community 33.2.1): 13 grids, 12 in Admin plus the File Center. Others built all of them. Your work was the **v33 cleanup** on Mar 4, 2026 (Q24).
@@ -537,7 +537,7 @@ return (
 - `undoRedoCellEditing: true` gives Ctrl+Z / Ctrl+Y for edits.
 - **The server checks again.** Client checks are only for fast feedback.
 
-**Your angle:** Very little inline editing. Load Book has editable scenario cells, and Settings uses the built-in select editor. Price & Load overrides open a **modal** instead. `[fill in: why a modal, e.g. an override covers a range of hours or needs a reason]` AMP grids aren't editable at all. You built AMP's outage-management and admin forms, so you know the form side well.
+**Your angle:** Very little inline editing. Load Book has editable scenario cells, and Settings uses the built-in select editor. Price & Load overrides open a **modal** instead. No reason is recorded: another engineer turned an override page into a popup in June 2026. If asked, say that, and give your own view as a view. AMP grids aren't editable at all. You built AMP's outage-management and admin forms, so you know the form side well.
 **Likely follow-ups:** "Check a value against the server while typing?" (Debounce, show "checking", and check again on save.) · "Undo?" (`undoRedoCellEditing`.)
 
 ---
@@ -596,7 +596,7 @@ return (
 - **Full-row edits:** save once in `onRowValueChanged`. **Batch edits** (Enterprise): one API call, one database transaction, one audit entry per change.
 - For risky edits (money, trade bookings) it can be better to **wait** for the server and show a spinner. Optimistic is for low-risk edits.
 
-**Your angle:** The backend part is your strength: version checks, and permission checks that fail closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). "The UI makes a cell read-only; the API still rejects the edit." In Jupiter, overrides are saved from the modal through the override API, not cell by cell, and your DST fix put the date + HE + TZ key into those saves. `[fill in: how Load Book scenario edits are saved]`
+**Your angle:** The backend part is your strength: version checks, and permission checks that fail closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). "The UI makes a cell read-only; the API still rejects the edit." In Jupiter, overrides are saved from the modal through the override API, not cell by cell, and your DST fix put the date + HE + TZ key into those saves. Load Book scenario edits aren't saved to the API: an effect writes the scenarios to the browser's local storage. There's no Save button, so scenarios live in one browser. That's a good "what would you change" answer: save them per user through the API.
 **Likely follow-ups:** "Why not just update state after the API returns?" (It feels slow. But for risky edits, that's the safer choice.) · "What does the user see when it fails?" (The old value comes back, the cell can flash with `api.flashCells`, and an error message names the deal.)
 
 ---
@@ -842,7 +842,7 @@ return (
 - **Pinned rows** are Community. v33.3 added user row pinning (`enableRowPinning`); pinning from the context menu is Enterprise.
 - **Official numbers come from the server.** A sum of rounded rows can differ from a rounded total. Decide which one the business wants ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)).
 
-**Your angle:** Live Deal Summary uses row grouping `[fill in: grouped by what]`. The Load Book hedge grid has a status-bar sum and pinned bottom totals. Your Flash Table has pinned month rows, column groups, and a month accordion you built with your own header and label cell. AMP removed its grouping: it was Enterprise-only.
+**Your angle:** Live Deal Summary uses row grouping with no default: users can group by any column, and their grouping is restored from session storage. The Load Book hedge grid has a status-bar sum and pinned bottom totals. Your Flash Table has pinned month rows, column groups, and a month accordion you built with your own header and label cell. AMP removed its grouping: it was Enterprise-only.
 **Likely follow-ups:** "Does a pinned total follow the filters?" (Not by itself. Recompute it in `onFilterChanged` with `api.forEachNodeAfterFilter`, or use Enterprise `grandTotalRow`.) · "Group 1 million rows?" (SSRM: the server groups.)
 
 ---
@@ -941,9 +941,9 @@ export const hourCols: ColDef<HourRow>[] = [
 - **Backend side:** in Python, `datetime` uses `fold=1` for the second (repeated) hour, and `zoneinfo` respects it. Store the instant (UTC) for math, and keep date + HE + TZ for labels and keys.
 
 **Your angle:** This is your best AG Grid story: a real bug that crossed the backend, the grids and the export. Tell it in STAR order:
-- **Situation:** how it was found. `[fill in: who noticed, and what they saw]`
+- **Situation:** how it was found. A desk user reported a spike in the Hedges line of the ST Forecast chart on the fall-back day. Your read-only audit of the whole stack found that no hour key knew about DST.
 - **Root cause:** date + hour ending → New York local time → one instant for both 1 AM hours.
-- **Where:** both sides, about 27 backend and 10 UI commits. `[fill in: where the bad conversion was]`
+- **Where:** both sides, about 27 backend and 10 UI commits. In the API, a `GROUP BY` on time and hour-ending summed the two 1 AM rows, and the load, validator and override keys had no time zone. In the UI, chart points came from New York wall-clock time. (Another engineer fixed a separate DST issue in March.)
 - **Fix:** the key, the TZ column, the export order.
 - **Result:**
   - Price & Load and the long-term forecast got a TZ column after HE, sorted Date, HE, TZ.
@@ -1203,7 +1203,7 @@ return (
 - **Grouping vs tree data:** grouping makes groups from a column's values. Tree data uses a hierarchy that is already in the data.
 - v34.1 allows tree data and master/detail together. For huge trees, SSRM can load children from the server.
 
-**Your angle:** Jupiter uses tree data on ST Forecast and Load Book. `[fill in: what the levels are]` Neither app uses master/detail.
+**Your angle:** Jupiter uses tree data on ST Forecast and Load Book. ST Forecast has two levels: the comparison pair (6 pairs), then on-peak or off-peak. Load Book has one or two: a category (hedges, exchange, award totals, forward volume delta), then the deal or scenario. Another engineer built both. Neither app uses master/detail.
 **Likely follow-ups:** "Keep rows open after a refresh?" (`getRowId`; the grid state also saves which groups are open.) · "Load children lazily?" (SSRM, or master/detail with a fetch in `getDetailRowData`.)
 
 ---
@@ -1230,7 +1230,7 @@ return (
 - Don't put many tab stops inside each cell.
 - More basics in [03 Q23](03-React-Fundamentals.md).
 
-**Your angle:** Trading users work from the keyboard, so keyboard support is a speed feature, not only compliance. `[fill in: any accessibility requirement at BETM]`
+**Your angle:** Trading users work from the keyboard, so keyboard support is a speed feature, not only compliance. At Cerner, your Java UI had to work with screen readers, so every button and box had a description. The same rule applies to custom cell renderers: an icon-only button needs an `aria-label`.
 **Likely follow-ups:** "How do you test it?" (A keyboard-only walk-through, plus axe in Playwright.)
 
 ---
@@ -1293,7 +1293,7 @@ test('edit volume and see it saved', async ({ page }) => {
 - Call `setupAgTestIds()` only outside production.
 - **E2E the flows that matter:** edit and save, export, filters, and the DST days.
 
-**Your angle:** You wrote 68 of the 102 UI test files in Watt with Vitest + Testing Library. Jupiter also uses Vitest, but **no test mounts a grid**. Your tests cover the logic around the grids: column placement and sort with TZ, the fall-back-day highlight, the 25-row exports, row mappers and the Flash Table model. That's a fair answer: unit-test the pure logic, and test the grid itself in a real browser. AMP has 3 Jest utility tests, none for grids. A DST unit test is a great example: "Nov 1, 2026 has 25 rows, EDT before EST."
+**Your angle:** You wrote about two-thirds of the UI test files in Watt with Vitest + Testing Library. Jupiter also uses Vitest, but **no test mounts a grid**. Your tests cover the logic around the grids: column placement and sort with TZ, the fall-back-day highlight, the 25-row exports, row mappers and the Flash Table model. That's a fair answer: unit-test the pure logic, and test the grid itself in a real browser. AMP has 3 Jest utility tests, none for grids. A DST unit test is a great example: "Nov 1, 2026 has 25 rows, EDT before EST."
 **Likely follow-ups:** "Why not snapshot the grid?" (Big, brittle, and virtualized.) · "How do you test the datasource?" (Mock `fetch` and check the request body and the rows passed to `successCallback`.)
 
 ---
@@ -1366,7 +1366,7 @@ export function AwardsVsHedges(
 - AG Charts also uses modules: register `AllCommunityModule` from `ag-charts-community`.
 - Chart libraries are big. Lazy-load chart pages ([03 Q14](03-React-Fundamentals.md)).
 
-**Your angle:** Jupiter has integrated charts on the Live Deal Summary grid, and Load Book uses standalone AG Charts for awards vs hedges. It also uses ApexCharts and Vega-Lite ([06](06-Jupiter-Load-Deal-Deep-Dive.md)). Integrated charts need AG Charts Enterprise (12.3.1 here), registered with the grid in the entry file. `[fill in: who built these charts, and why AG Charts there]`
+**Your angle:** Jupiter has integrated charts on the Live Deal Summary grid, and Load Book uses standalone AG Charts for awards vs hedges. It also uses ApexCharts and Vega-Lite ([06](06-Jupiter-Load-Deal-Deep-Dive.md)). Integrated charts need AG Charts Enterprise (12.3.1 here), registered with the grid in the entry file. Another engineer built both: the integrated charts in Dec 2025, and the Load Book AG Charts in Jan 2026. No reason is recorded. A likely one, said as a guess: the Enterprise licence was already paid, and the charts match the grid.
 **Likely follow-ups:** "Integrated or standalone?" (Integrated: users explore ad hoc. Standalone: a fixed, designed chart.) · "Why three chart libraries?" ([06](06-Jupiter-Load-Deal-Deep-Dive.md))
 
 ---
@@ -1423,7 +1423,7 @@ export function ResultTable(
 - **Big results:** limit rows on the server (the agent uses a read-only database role) and show "first N rows".
 - **AI output is untrusted text.** The grid shows values as text, so don't render HTML from it. If users export to CSV, escape formula characters (Q15).
 
-**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1): Load Deal AI's chat page shows the SQL, the result table and a chart. You built the result table and its formatter (Sep 2026). You also fixed a 130px blank band in dark mode by making the tall drop zone opt-in. `[fill in: how your code builds the column defs, and the row limit]` Say only what your code really does. For the rest, say "I would".
+**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1): Load Deal AI's chat page shows the SQL, the result table and a chart. You built the result table and its formatter (Sep 2026). You also fixed a 130px blank band in dark mode by making the tall drop zone opt-in. Fields are `c0`, `c1`… because dots in SQL names break field paths. A column is a measure when every value is numeric and one has a fraction, so IDs aren't formatted. Values arrive as strings. No row limit on screen: the grid is capped at 420 px and scrolls. The PDF export stops at 500 rows. Say only what your code really does. For the rest, say "I would".
 **Likely follow-ups:** "The model returns 100,000 rows?" (A server-side limit and paging.) · "Column order?" (Keep the SQL order.)
 
 ---

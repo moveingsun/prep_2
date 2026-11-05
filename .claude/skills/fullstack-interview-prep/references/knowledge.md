@@ -1,6 +1,6 @@
 # Knowledge record: Kurt's full-stack interview
 
-Last updated: **2026-11-04** (Watt part of reply #2). First written 2026-11-03, the session that built `Ravi's Position/`. Add new facts here with a date when they come in.
+Last updated: **2026-11-04** (replies #2–#4, and Kurt's own answers). First written 2026-11-03, the session that built `Ravi's Position/`. Add new facts here with a date when they come in.
 
 ## Contents
 1. The interview
@@ -15,7 +15,9 @@ Last updated: **2026-11-04** (Watt part of reply #2). First written 2026-11-03, 
 ---
 
 ## 1. The interview
-- **Role:** full-stack engineer. Company and team: `[unknown, ask Kurt]`. **Ravi** referred Kurt and forwards his resume to the hiring manager.
+- **Company and role:** **Full Stack Engineer at Dodge & Cox** (San Francisco investment manager, founded 1930, 100% employee-owned, ~$465B AUM as of Mar 2026; verified on Wikipedia and the firm's fact sheet, 2026-11-04). **The role doesn't involve AI.**
+- **Why Kurt is interviewing:** **Ravi**, his former manager at BETM, left BETM, joined Dodge & Cox, and invited Kurt to interview for his team. Ravi forwards the resume to the hiring manager. **Ravi is the manager who resigned in story M1** (Kurt confirmed 2026-11-04): tell M1 as continuity, never as "the team was left in trouble". Ravi is Kurt's advocate: he knows his work and wants him on the team. The other interviewers don't, so Kurt's claims should be exact and match what Ravi would say.
+- **Format and interviewers:** unknown (Kurt, 2026-11-04).
 - **Date:** assumed **about Tue Nov 10, 2026** (not confirmed). The 7-day plan runs Wed Nov 4 → Tue Nov 10.
 - **What Kurt heard:** heavy on **React + TypeScript**, **AG Grid** (Ravi said so explicitly), and the **design of Load Deal (Jupiter) and Watt**.
 - **Guide:** `Ravi's Position/`, with pages 00–08 (08 is AG Grid). There is an earlier AI-role guide in `AI Engineer/` (BCBSMA Sr. AI Engineer, Oct 2026). Its story bank `AI Engineer/13-Behavioral-Story-Bank.md` (S1–S14, M1) is shared by both guides.
@@ -27,6 +29,14 @@ Last updated: **2026-11-04** (Watt part of reply #2). First written 2026-11-03, 
 - **Cerner** 2018–2020: Java UI for a healthcare revenue-cycle app.
 - MS Information Systems (Northeastern); BS IoT Engineering (BUPT).
 - Non-native English speaker. Reads the guide on his phone in the GitHub app.
+- **Kurt's own answers (2026-11-04):**
+  - He coded the very first version of Kronos as a Wayfair co-op in 2018. Backstage: he remembers little. It's Spotify's open-source developer-portal framework (a CNCF project, still active), which Wayfair teams used as the UI frame so they didn't reinvent the wheel. Frontend vs backend plugins: unknown. **Don't invent details**; he says "a few years ago, I don't remember the internals".
+  - **Accessibility:** none at Wayfair. At Cerner the UI had to support screen-reader readout, so in the Java UI he gave every button and box a description.
+  - **Datadog RUM:** he analyzes RUM data with Claude to study user experience; most slowness was backend. He has **not used the React Profiler**.
+  - He has **not used Next.js or Server Components**.
+  - **What he'd change on Watt:** the agent setup. He'd host an open-source agent (**Hermes Agent** from Nous Research, confirmed 2026-11-04) and build features on top of it, because it's widely used and better than a custom setup.
+  - **Why Jupiter removed the browser cache:** so every request shows backend data, the source of truth; the backend may change (recomputes, overrides).
+  - Stories (spec change, C1 disagreement, PR catches) he'll think about later.
 - More background: `HANDOFF.md` §2 (written for the AI role).
 
 ## 3. BETM projects: who built what
@@ -39,7 +49,7 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - **Ask Data UI** (he created it)
   - part of **Ask Knowledge UI** (uploads, PDF citation highlighting)
   - in the shell: the **Admin tab** and a shared **admin-kit** package used by 3 apps (one cost-reporting page). Reply #2 detail: admin-kit is his (13 commits); in the shell itself his commit is a fix to the admin sections (expired links). The UI-element helpers were shared work.
-  - **68 of the 102** UI test files
+  - **68 of the 102** UI test files (reply #1; reply #5 counts 65 of 103). **Kurt decided (2026-11-04):** say "about two-thirds" in interviews; leave the sent resume; use "about two-thirds" if the resume is re-rendered.
 - **Kurt, backend:**
   - the entitlements-driven app registry
   - signed short-lived bundle links
@@ -105,7 +115,8 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - A cache-warming loop used 98% of the API warehouse's run time (222.9 of 227.2 execution-hours over 7 days). That week 96 of 179 queue runs failed and 453 messages were dead-lettered. **Fix (not removal):** renew message locks, one message per deal, warm only the current and prior month.
   - The event-loop fix: he made the 72 handlers plain `def` functions (FastAPI runs them in a thread pool).
 - **DST fix (Kurt's):**
-  - Root cause: local-time conversion collapsed the two 1 AM hours on the fall-back day into one.
+  - Found when a desk user reported a spike in the ST Forecast Hedges line on the fall-back day; Kurt's read-only audit found no hour key knew DST.
+  - Root cause on **both sides**: API `GROUP BY` on time + hour-ending summed the two 1 AM rows (2× spike), a parser built times from a drifting hour label, and load/validator/override keys lacked the time zone; the UI built chart points from New York wall-clock time. (Another engineer fixed a separate DST issue in March.)
   - The fix keys every hourly row by date + hour-ending + EDT/EST, so a day can have 23, 24 or 25 hours, with one helper that converts the key to a fixed-offset time.
   - Applied across charts (EDT/EST tooltips), grids (a TZ column), Excel export and override saves.
   - About 10 UI and 27 backend commits, with a spec and unit tests.
@@ -123,7 +134,7 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
 - **Tests:**
   - UI: Vitest + Testing Library, 25 files and ~150 cases; Kurt wrote 17 of the files.
   - API: pytest, ~140 files; Kurt made 261 of the 294 test commits. Baseline: 839 passed, 3 skipped.
-  - **CI runs only lint.** There's no coverage target.
+  - **CI runs lint (ESLint) and a type check (`tsc -b --noEmit`), both blocking, plus a Docker build, but no tests** (reply #5). The pipeline is Kurt's; he made ESLint blocking. No coverage target.
 - **Domain terms:**
   - **Load deal:** a contract to serve a utility's customer load.
   - **Loads-through cutoff:** the last date with settled load in a PnL run.
@@ -182,6 +193,41 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
 
 **Watt rollback (Q15, corrects reply #4):** the sync picks the highest semver in blob storage and writes it back; no pin/hold flag. Supported rollback = **delete the newer blob** (sync code + Kurt's design doc). The shell's ARCHITECTURE.md is out of date ("re-point the registry"). The bundle container has a time-based immutability policy that may block deletes, so the practical fix may be to publish a corrected higher version. Kurt built the service, the design doc and the sync job.
 
+### TypeScript and React facts (company reply #5, Part A, 2026-11-04)
+- **TS:** Watt 6.0.3 (strict: true in Ask Data, Data Validation, Memory, packages; shell and Doc Intelligence rely on the TS 6 default). Jupiter 5.8.3, strict on.
+- **CI:** Watt app pipelines = lint + build (`tsc -b`); Data Validation also Vitest; bundle-publish = npm audit + tests (DV: audit + build); shell = Docker build; packages = test, typecheck, lint, build, publish. Jupiter: see above.
+- **Props:** Watt ~70 interface to 3 type (plus inline); Jupiter ~38 type / 30 interface; no lint rule.
+- **React:** Compiler on only in the Watt shell (another engineer). No newer React 19 APIs (no ref-as-prop, use(), useActionState, <Context> provider), no transitions; Jupiter has one forwardRef. Kurt used useSyncExternalStore in Data Validation.
+- **Contexts:** Watt apps mostly none (host object instead; Doc Intelligence has two, another engineer's). Jupiter: auth user, entitlements (hasAccess), settings, theme, deal summary; Kurt's PnL context (data, meta, loading, error, notFound, refresh); Portfolio PnL context shared (Kurt added month history + YTD).
+- **Kurt's hooks:** useCostReport (aborts older request, drops late answers), useAskAiJob (create/poll/cancel), useVisual<T>; also useLoad<T>, useConversations, useJupiterChatClient.
+- **Fetching (Watt):** plain fetch; headers from host getAuthToken; AbortSignal timeouts (DV 300 s → 408; Doc Intelligence admin 60 s); in-memory caches only.
+- **DV forms (Kurt's, except the check edit modal):** controlled useState; patch interfaces with optional fields, only touched fields sent; no create type (rules via chat). `MonitorKind = 'pipeline' | 'dataset'`, discriminated unions on kind/type; check type and severity are strings. **Gap:** 422 field lists fall back to status text (detail kept only when a string).
+- **Types:** admin-kit generic only `withShares<T>`; Kurt's satisfies AppHost (test), .d.ts files, Record by conversation kind, intersection, Jupiter unions/guards/`Envelope<T>`; conditional types are another engineer's. Fixes: DV description `string | null` → `string` (2026-09-05) and the seeded null owner; Jupiter fallback month (2026-09-01). Jupiter has ~316 `any` (lint warns only).
+- **Permission keys:** plain strings in Watt, AMP, Jupiter. Kurt's: shell admin-path helper; AMP Entra object ID + case-insensitive type code.
+- **PDF viewer ref (Kurt, 2026-09-29):** host div + controller refs; citation reveal centers, waits ~400 ms, re-centers; pre-sized page holders.
+- **Tests:** no MSW (vi.mock, vi.stubGlobal fetch, vi.fn). Test files (Kurt's): shell 35 (20), Doc Intelligence 39 (18), Ask Data 6 (6), DV 22 (20), Memory 1 (1) = **65 of 103 in Watt**; Jupiter 25 (17). Reply #1 said 68 of 102 (on the resume). Best test: DV conversation search (fake timers, 300 ms debounce → one request, no stale overwrite).
+
+### Jupiter facts (company reply #5, Part B, 2026-11-04)
+- **Ask AI (Kurt's):** classic answer = one result object with parallel arrays (text, SQL, tables, Vega-Lite); errors = code + message (cancelled, disabled, timeout). chat-kit version = parts tagged by kind (sql, table, chart, suggestions). State: context (conversations, activeId, agent, threadsLoading, loadState, serviceDisabled); hook (phase, jobId, progress, startedAt; refs for timer, abort controller, run ID). No error boundary (chart block has a fallback). Poll stops via clearTimeout + AbortController + run-ID counter, on done/error/404/3 failures/10-min cap/cancel (DELETE)/unmount. Table fields `c0, c1…` (dots break AG Grid field paths); measure = all numeric and one has a fraction → 2 decimals. No on-screen row limit (420 px scroll); PDF export caps at 500 rows.
+- **PnL amounts:** numbers; `null` = not computed, never 0. Only Ask AI tables are strings.
+- **Stored procedure:** recomputes PnL for one or all deals for one balance-of-month period; writes a new run (today's as-of date) in hourly and daily parts. The SQL is in a separate warehouse repo, so the author wasn't checked; the callers are Kurt's.
+- **Blocking handlers found** from one production trace: active-deals request 4.17 s for ~160 ms work (140 ms auth SQL, 4.0 s gap, 17 ms cache hit) while a heavy PnL request ran on the pod. Conversion was AST-driven (plain `def` only if no `await`); tests enforce it.
+- **Entitlements in the UI:** session storage, no TTL, no refresh on 403; new tab or logout clears. Kurt's fixes: never cache empty results; fixed the server cache key (changes took up to a day).
+- **Gateway:** Jupiter's chat stream route has a **60 s** unbuffered timeout; the service closes streams at 40 s; turns can run to 180 s across reconnects.
+- **Overrides modal:** another engineer, June 2026, no reason recorded. **Load Book scenarios** are saved only to browser localStorage by an effect (no API, no Save button).
+- **Grouping/tree:** Live Deal Summary has no default grouping (user grouping restored from session storage). ST Forecast tree: comparison pair (6) → on/off-peak. Load Book: category (hedges, exchange, award totals, forward volume delta) → deal or scenario. Charts: another engineer (integrated Dec 2025, Load Book AG Charts Jan 2026), no reason recorded.
+- **CI:** API = ruff lint + format, image build; pytest never in the pipeline (an old design record says otherwise and is out of date); the repo rule is to run tests locally. UI = tsc + ESLint (Kurt created it in July, before any tests; Vitest came in Sept and wasn't added). Dexie removed by another engineer 2026-08-06/07, no reason recorded (Kurt's reason: backend is the source of truth).
+- **Telemetry:** Datadog RUM + browser logs (another engineer, Nov 2025): 100% sessions and session replay, privacy "allow" (unmasked). Kurt's fix: the container passes only app-prefixed env vars, so Datadog agent vars (including an API key) no longer reach the browser, and build logs no longer print the RUM token.
+
+### AMP, jobs and Watt facts (company reply #5, Part C, 2026-11-04)
+- **AMP UI:** no class components (only a Dexie DB class). Tailwind (custom colors, font, extra-wide breakpoint, ~3,000 classNames) + 12 global CSS files + ~106 inline styles. Dexie: one table (key, data, timestamp), 24 h TTL on read, cleared at sign-in/logout; now only reference dropdowns, because Kurt stopped caching revenue/pricing/volume on 2026-03-11. Dexie and Tailwind setup: another engineer.
+- **AMP landing ~10 s → 5 s (Kurt, March 2026 release):** backend only; per-entity fetch on a 4-thread pool, so two ~5 s chains run in parallel. Measurement not recorded (likely his timing logs from a week earlier). The remaining 5 s = the slower entity fetch (Redis, or warehouse on a miss); notes mention a 5.6 s time-dimension rebuild and an external time-series call of 10 s (3–5 s after batching).
+- **AMP tables:** no deal/position tables (deals are Jupiter's); asset price, volume, revenue, outage, outage management, line view, market monitor, admin grids, file list; all sorting in the browser.
+- **AMP job service (Kurt, 83/85 commits):** KEDA ScaledJob; Redis list trigger polled every 5 s; 0–20 replicas, one job per pod, 1 h deadline; Python retries; always-on controller every 30 s (dependencies, retries, cascade cancel); job types Python/SQL/stored procedure/HTTP; seeded jobs = demos + a revenue calculation; code on a non-default branch; another engineer's Service Bus move unmerged. AMP's scheduled cache refreshes run on Databricks (Kurt's). **Ask Kurt whether the service is live in production** before claiming what runs on it.
+- **Jupiter worker:** KEDA ScaledJob on Service Bus (created by another engineer; later changes Kurt's): per-deal cache refreshes (~32 messages), portfolio PnL refresh, optional recompute; polls every 10 s, ≤3 replicas, lock renewal up to 30 min; recompute ~1 min; cold portfolio build 5.6 s vs 0.3 s warm.
+- **Watt onboarding:** Memory (newest app) service + UI started 2026-10-16 and was in the dev/stage registry that day (merged next day) → under a day; service work ran to 2026-11-02 (134 commits). Not in the production config. "Who: me" in the reply, so Kurt likely built Memory (confirm). Teams: no doc names them ("business users").
+- **Strict-ID incident (2026-10-21):** found from the Redis error ("can't be a complete ID", uniqueness mode strict); production Redis has active geo-replication (strict by default), dev/stage don't. Jupiter hotfix 01:54 UTC, library fix 02:01, hotfix dropped 02:08.
+
 ### AMP: Asset Management Platform
 - **Stack:** React 18, TypeScript, **Create React App**, **AG Grid**, ECharts, Highcharts, Chart.js, embedded Power BI, React Context, Dexie, MSAL, Datadog RUM.
 - **Kurt, frontend** (Jan–Aug 2026): the asset dashboard's price and volume tabs, filters and widgets; outage-management forms; admin user and service-principal forms; entitlement-based access checks.
@@ -228,7 +274,11 @@ Kurt's own base resume (`Resume/Kurt_Wang_Resume.pdf`, 1 page, uploaded 2026-11-
 - [x] Message #2, Jupiter part: received 2026-11-03 and applied to pages 01, 05 and 06.
 - [x] Message #2, Watt + BOTH part: received 2026-11-04 and applied to pages 07, 06, 05, 04, 03, 02, 01 and story S7.
 - [x] Message #4 (follow-ups on page 07): answered 2026-11-04 and applied to pages 07, 06, 05 and 02.
+- [x] Message #5: all three parts answered 2026-11-04 (pages 01–08).
+- [ ] Ask Kurt: is the AMP job service live in production, and what runs on it? Did he build the Memory app?
+- [ ] Ask Kurt: did he write the PnL stored procedure itself (the SQL is in a separate warehouse repo)?
 - [ ] Kurt-only gaps left: production user count, time to add an app, spec changes, PR feedback examples, why Price & Load uses a modal, what Live Deal Summary groups by, tree-data levels, who first noticed the DST bug.
 - [x] Message #3 (AG Grid, Jupiter + AMP + Watt rollback): answered 2026-11-04 and applied to pages 08, 06 and 07.
-- [ ] The interview date, the company and the format.
+- [x] The company and role: Dodge & Cox, Full Stack Engineer (2026-11-04).
+- [ ] The exact date, the format and the interviewers.
 - [ ] Kurt fixes "sole" and "20s" in his own 1-page base resume.

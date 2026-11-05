@@ -998,13 +998,19 @@ export const handlers = [
 - Component libraries (MUI, Ant Design, or Radix-based kits) save time on accessible widgets.
 - Trading UIs need dense layouts, number alignment (`font-variant-numeric: tabular-nums`), and clear up/down colors.
 
-**Your angle:** Watt uses **Tailwind**, with a shared ui-kit that a teammate built and that your apps use. Jupiter and AMP use Tailwind too. AMP has custom colors, a font and an extra-wide breakpoint (about 3,000 `className` uses), plus 12 global CSS files and about 106 inline styles, and no CSS modules or CSS-in-JS. `[fill in: one thing you like or dislike about Tailwind]`
+**Your angle:** Watt uses **Tailwind**, with a shared ui-kit that a teammate built and that your apps use. Jupiter and AMP use Tailwind too. AMP has custom colors, a font and an extra-wide breakpoint (about 3,000 `className` uses), plus 12 global CSS files and about 106 inline styles, and no CSS modules or CSS-in-JS.
+
+**Your Tailwind opinion** (keep only the points you agree with):
+> "I like that the styles live next to the markup. I don't invent class names or hunt through CSS files, and when I delete a component, its styles go with it. The config gives everyone the same spacing and colors, which helped when contractors worked on the UI. It also works well with AI coding tools, because the class names are standard. What I dislike: long class lists make JSX hard to read, so I pull repeated pieces into small components. And it's easy to drift. On AMP we have Tailwind, plus 12 global CSS files and about a hundred inline styles, so there are three ways to style one thing. I'd pick one."
+
+- **A gotcha to know:** Tailwind finds classes by reading your source as plain text. A class built at run time, like `` `text-${color}-600` ``, is never generated. Map each value to a full class name instead: `{ up: 'text-green-600', down: 'text-red-600' }` ([Tailwind docs](https://tailwindcss.com/docs/detecting-classes-in-source-files)).
 **Likely follow-ups:** "How do you keep styles consistent across teams?" (Design tokens, a shared component library, and lint rules.)
 
 ---
 
 ## References
 - [React Versions](https://react.dev/versions): the official list; confirms 19.3 is the latest.
+- [Tailwind: detecting classes in source files](https://tailwindcss.com/docs/detecting-classes-in-source-files): why dynamic class names don't work (Q25).
 - [React 19.3 release post](https://react.dev/blog/2026/09/09/react-19-3): View Transitions, Fragment refs, `browser()`, Trusted Types.
 - [React 19.2 release post](https://react.dev/blog/2025/10/01/react-19-2): Activity, useEffectEvent, Performance Tracks, Partial Pre-rendering.
 - [React v19 release post](https://react.dev/blog/2024/12/05/react-19): Actions, new hooks, ref as a prop, removed APIs.

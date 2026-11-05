@@ -2,7 +2,7 @@
 
 [← Index](00-Index.md) · **Interview priority:** High (Ravi: "heavy on AG Grid") · **Read time:** ~100 min, then type the 4 live-coding tasks (Q25–Q28) from memory
 
-> **Why this matters for this role:** Ravi said this interview will be heavy on AG Grid, so expect both "explain it" questions and live coding. You have real grid experience to talk about. Jupiter runs AG Grid Enterprise: tree data, row grouping, range selection and integrated charts. You fixed its daylight-saving bug across the hourly grids and Excel exports, and your Ask AI page shows each answer's table in AG Grid. But a frontend engineer built most of Jupiter's grids. So: know the current API well, tell the DST story clearly, and be exact about what you built and what you reviewed.
+> **Why this matters for this role:** Ravi said this interview will be heavy on AG Grid, so expect both "explain it" questions and live coding. You have real grid experience to talk about. Jupiter runs AG Grid Enterprise 34.3.1: tree data, row grouping, set filters, cell selection and integrated charts. You rewrote its Portfolio PnL Flash Table, fixed the daylight-saving bug across the hourly grids and Excel exports, and built the Ask AI result table. AMP runs AG Grid Community 33.2.1, and you did its v33 cleanup. But other engineers built most of the grids in both apps. So: know the current API well, tell the DST story clearly, and be exact about what you built and what you reviewed.
 
 Related pages: [03 · React](03-React-Fundamentals.md) (Q21: slow grid) · [04 · Coding](04-React-Coding-Exercises.md) (Q4: plain table, Q9: price ticker) · [05 · System design](05-Frontend-System-Design.md) (Q1: data grid, Q5: real-time) · [06 · Jupiter](06-Jupiter-Load-Deal-Deep-Dive.md)
 
@@ -14,7 +14,7 @@ Related pages: [03 · React](03-React-Fundamentals.md) (Q21: slow grid) · [04 �
 
 - **AG Grid 36.2.0** (Sept 16, 2026). This is the latest `ag-grid-community`, `ag-grid-react` and `ag-grid-enterprise` on npm (checked Nov 3, 2026). AG Charts is 14.2.0.
 - Every code sample on this page was type-checked in strict mode (TypeScript 7.0.2, React 19.3) against 36.2.0. The `[fill in]`s are things only you or the company code can answer.
-- **Jupiter's AG Grid version:** `[fill in: check package.json]`. If it's older than v33, the setup code looks different: CSS theme files, and no module registration.
+- **Your apps' versions:** Jupiter is on **34.3.1 Enterprise** (Oct 2025), with AG Charts Enterprise 12.3.1. AMP is on **33.2.1 Community** (Mar 2025). Both are past v33, so both register modules. But both still use the **legacy CSS themes** with `theme="legacy"`, not the Theming API this page uses. 36.2.0 still supports `theme: 'legacy'`.
 
 | Version | Date | What changed |
 |---|---|---|
@@ -150,11 +150,11 @@ export function DealGrid({ deals }: { deals: Deal[] }) {
 | | Context menu |
 | | Integrated charts, sparklines |
 
-Jupiter uses Enterprise features: tree data, row grouping, range selection, status-bar sums and integrated charts. All of them are in the right column.
+Jupiter uses Enterprise features: tree data, row grouping, set filters, cell selection (called range selection before v32.2), status-bar sums and integrated charts. All of them are in the right column. AMP is Community only.
 
 ### The four row models, one line each
 
-- **Client-side** (default, Community): load all rows once; the grid sorts, filters and groups in the browser. Jupiter uses this for every grid.
+- **Client-side** (default, Community): load all rows once; the grid sorts, filters and groups in the browser. Jupiter and AMP use it for every grid.
 - **Infinite** (Community): loads blocks of rows as you scroll. The server sorts and filters. No grouping.
 - **Server-side, "SSRM"** (Enterprise): blocks, plus groups that load when opened. The server sorts, filters, groups and aggregates. AG Grid says Enterprise users should prefer it to Infinite.
 - **Viewport** (Enterprise): the server knows exactly which rows are on screen and pushes changes for them. The docs warn: don't use it unless you really need it.
@@ -208,19 +208,20 @@ Jupiter uses Enterprise features: tree data, row grouping, range selection, stat
 ## Questions & answers
 
 ### Q1. How much AG Grid have you used, and what did you build with it?  `[P0]`
-**Say this first (~30 sec):** "I've used AG Grid in two production React apps at BETM. Jupiter, our Load Deal app, uses AG Grid Enterprise with the client-side row model. It has tree data, row grouping, range selection with status-bar sums, and integrated charts. A frontend engineer built most of those grids, and I reviewed their PRs. My own grid work: I fixed the daylight-saving bug across the hourly grids and the Excel exports. And my Ask AI page shows each answer's SQL result in an AG Grid. AMP, our asset platform, also uses AG Grid."
+**Say this first (~30 sec):** "I've used AG Grid in two production React apps at BETM. Jupiter, our Load Deal app, runs AG Grid Enterprise 34 with the client-side row model: tree data, grouping, set filters, cell selection with status-bar sums, and integrated charts. Another engineer built most of those grids, and I reviewed their PRs. My own grid work: I rewrote the Portfolio PnL Flash Table, fixed the daylight-saving bug across the hourly grids and Excel exports, and built the Ask AI result table. On AMP, I did the version 33 upgrade cleanup."
 
 **If they dig deeper:**
 - Say clearly what you built and what you reviewed:
   - **Built:** the DST fix (Q14). Every hourly row is now keyed by date + hour ending + EDT/EST, so a day can have 23, 24 or 25 rows. The grids got a TZ column. Excel exports keep both 1 AM rows on the fall-back day, sorted by TZ.
-  - **Built:** the Ask AI result table (Q22). `[fill in: how your code builds the column defs from the SQL result]`
-  - **Built (data side):** PnL Summary moved from mock data to the live API, and Portfolio PnL history. `[confirm: are these AG Grid pages? Did you change the grid itself, or only the data?]`
+  - **Built:** the **Portfolio PnL Flash Table** rewrite (Oct 22, 2026): a month accordion, pinned month rows, YTD, custom headers, and a row model with tests.
+  - **Built:** the Ask AI result table and the Admin usage panel (Sep 2026) (Q22). `[fill in: how your code builds the column defs from the SQL result]`
+  - **Built:** the PnL Summary grid sizing and data wiring (Jul–Aug 2026), and the ARR/MLC forecast labels and tooltips.
   - **Reviewed:** most other Jupiter grids (you approved 26 PRs). `[fill in: one real thing you caught in a grid PR]`
-  - **AMP** (React 18, Create React App): `[fill in: which AMP screens use AG Grid, and did you touch them?]`
+  - **AMP** (Community 33.2.1): 13 grids, 12 in Admin plus the File Center. Others built all of them. Your work was the **v33 cleanup** on Mar 4, 2026 (Q24).
 - Jupiter facts you can use:
   - **Deal Pricing & Load** shows one month of hourly rows by default: about 720–745 rows, 200 per page.
   - The **long-term forecast** table fetches every API page (2,000 rows each) into memory, then shows 100 per page.
-  - One wide grid turns **column virtualisation off** on purpose (Q11).
+  - The **Flash Table** (30+ deal columns) turns **column virtualisation off**, so auto-size can measure every column (Q11).
   - **Live Deal Summary** has integrated charts. **Load Book** uses standalone AG Charts for awards vs hedges.
 - Name the gap honestly: "I haven't built a server-side row model grid or a streaming grid in production. I know how they work, and I can show you."
 
@@ -245,7 +246,8 @@ Jupiter uses Enterprise features: tree data, row grouping, range selection, stat
 - **`enableDevValidations()`** in development gives full error messages. Since v36 it is not in the default bundles, so production stays smaller.
 - The React Compiler can memoize much of this for you. I still make grid inputs stable on purpose, because a grid that resets is a visible bug.
 
-**Your angle:** Jupiter is React 19 + TypeScript + Vite + React Router 7, with AG Grid Enterprise modules. `[fill in: where Jupiter registers the modules and sets the licence key, e.g. main.tsx]`
+**Your angle:** Jupiter is React 19 + TypeScript + Vite + React Router 7. Its entry file registers `AllEnterpriseModule` plus integrated charts with AG Charts Enterprise, once, and sets the licence key there. Two lazy-loaded grids also register `AllCommunityModule`. That's redundant, because the Enterprise bundle already includes it. AMP does the opposite: most grids register only what they need (client-side row model, text filter, pagination). But one page registers `AllCommunityModule`, so every module is available app-wide once that page loads.
+- **Licence keys:** a frontend licence key always ends up in the browser bundle. An env var only keeps it out of the repo.
 **Likely follow-ups:** "My grid loses column widths when I type in a search box. Why?" (New `columnDefs` on every render: Q23.) · "`AgGridProvider` or `ModuleRegistry`?" (Same result. The provider scopes modules to part of the tree and is the newer, React-style way.)
 
 ---
@@ -291,7 +293,7 @@ setDeals(deals);
 - Without IDs, transactions find rows by object reference (`===`). It works, but it's slower.
 - By default, editing **changes your row objects in place**. See Q8 for `readOnlyEdit`.
 
-**Your angle:** The DST fix is a row-ID story. Before the fix, two "1 AM" rows mapped to one instant, so they acted like one key. Now the key is date + hour ending + EDT/EST. `[confirm: does Jupiter's getRowId use that key, or only the data and sort?]` See also [03 Q2](03-React-Fundamentals.md) on React keys.
+**Your angle:** The DST fix is a row-ID story. Before the fix, two "1 AM" rows mapped to one instant, so they acted like one key. Now the key is date + hour ending + EDT/EST. Jupiter's hourly grids don't set `getRowId`; only two admin grids do. Rows are replaced as a whole from state, so the DST key lives in the data and the sort (Date, HE, TZ). If those grids moved to transactions, `getRowId` would have to return that same key, like `` `${date}|${he}|${tz}` ``. On AMP you fixed a real duplicate row ID: the File Center key needed the folder name too. See also [03 Q2](03-React-Fundamentals.md) on React keys.
 **Likely follow-ups:** "What if two rows share an ID?" (The docs require unique IDs. Updates and selection can then hit the wrong row.) · "When would you NOT use `getRowId`?" (A read-only table that is always replaced as a whole, like an Ask AI result.)
 
 ---
@@ -331,7 +333,7 @@ export const columnDefs: ColDef<Deal>[] = [
 - **Handle `null`:** the value can be `null` or `undefined` for group rows or rows that haven't loaded. The v36 types say `TValue | null | undefined`.
 - Related: `cellRendererSelector` picks a renderer per row; `cellDataType` gives built-in parsing and formatting by type.
 
-**Your angle:** Formatting matters in Jupiter because traders compare the numbers with their own workbook ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)). `[fill in: Jupiter's number rules, e.g. decimals, negatives in parentheses]`
+**Your angle:** Formatting matters in Jupiter because traders compare the numbers with their own workbook ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)). Jupiter's shared formatters (another engineer's) give two decimals, accounting-style currency, ISO dates, and a red class for negatives. You wrote the Ask AI table formatter. On AMP you added formatters that join array values into comma lists, which fixed the grid's object-column warnings.
 **Likely follow-ups:** "Why does my money column sort like text?" (The value is a formatted string. Keep a number and format with `valueFormatter`.) · "Can I sort by a computed column?" (Yes. Sorting uses the `valueGetter` result.)
 
 ---
@@ -413,7 +415,13 @@ export function VolumeEditor({
 - Code from v31 or older used imperative editors (`getValue()` with `useImperativeHandle`). The current style is the controlled one above.
 - A renderer is just a component, so you can unit test it alone, without a grid.
 
-**Your angle:** `[fill in: any custom renderer in Jupiter or AMP that you wrote or reviewed, e.g. a TZ badge or a status pill]`
+**Your angle:** You wrote four in Jupiter:
+- a month group header that folds and unfolds
+- a deal label cell: a month chevron, or an indented deal
+- a forecast tooltip for unsettled ARR/MLC days
+- a block-hours header tooltip on the hedge grid
+
+Another engineer wrote the badges, links, action buttons and row-drag delete. Neither app has a custom cell editor.
 **Likely follow-ups:** "How does a renderer call back into the page?" (A callback in `cellRendererParams`, or the grid `context`; watch for stale values, Q23.) · "How do you test a renderer?" (Render it alone with Testing Library.)
 
 ---
@@ -462,7 +470,7 @@ return (
 - **v34 change:** `getModel()` / `setModel()` on filter instances are deprecated. Use `api.getColumnFilterModel(col)` / `api.setColumnFilterModel(col, model)`.
 - **Custom sort:** `comparator` on the column, for example to keep blanks last. **Absolute sort** (v35) sorts by size and ignores the sign: `sort: { direction: 'desc', type: 'absolute' }`. That's useful for "biggest PnL moves, up or down".
 
-**Your angle:** Jupiter uses Enterprise modules. So if its columns say `filter: true`, they get the set filter. `[check: which filters Jupiter's grids use]`
+**Your angle:** Jupiter has Enterprise, so it uses set filters (Live Deal Summary, ST Forecast), floating and date filters (Price & Load, the hedge grid), and a quick filter (Flash Table). AMP is Community: text filters with custom floating filters on File Center, and a search box outside the grid on the Admin grids. **A real bug you fixed:** AMP had a set filter and grouping props but no Enterprise package, so they never worked; the grid only warned. You swapped the set filter for a text filter.
 **Likely follow-ups:** "Filter a million rows?" (On the server, with the Infinite or SSRM model and database indexes.) · "Keep the user's filters?" (Grid state, Q16.)
 
 ---
@@ -529,7 +537,7 @@ return (
 - `undoRedoCellEditing: true` gives Ctrl+Z / Ctrl+Y for edits.
 - **The server checks again.** Client checks are only for fast feedback.
 
-**Your angle:** `[fill in: are any Jupiter grids editable?]` If edits happen in forms instead, say so and say why. You built AMP's outage-management and admin forms, so you know the form side well.
+**Your angle:** Very little inline editing. Load Book has editable scenario cells, and Settings uses the built-in select editor. Price & Load overrides open a **modal** instead. `[fill in: why a modal, e.g. an override covers a range of hours or needs a reason]` AMP grids aren't editable at all. You built AMP's outage-management and admin forms, so you know the form side well.
 **Likely follow-ups:** "Check a value against the server while typing?" (Debounce, show "checking", and check again on save.) · "Undo?" (`undoRedoCellEditing`.)
 
 ---
@@ -588,7 +596,7 @@ return (
 - **Full-row edits:** save once in `onRowValueChanged`. **Batch edits** (Enterprise): one API call, one database transaction, one audit entry per change.
 - For risky edits (money, trade bookings) it can be better to **wait** for the server and show a spinner. Optimistic is for low-risk edits.
 
-**Your angle:** The backend part is your strength: version checks, and permission checks that fail closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). "The UI makes a cell read-only; the API still rejects the edit." `[fill in: how Jupiter saves grid edits, if any]`
+**Your angle:** The backend part is your strength: version checks, and permission checks that fail closed ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)). "The UI makes a cell read-only; the API still rejects the edit." In Jupiter, overrides are saved from the modal through the override API, not cell by cell, and your DST fix put the date + HE + TZ key into those saves. `[fill in: how Load Book scenario edits are saved]`
 **Likely follow-ups:** "Why not just update state after the API returns?" (It feels slow. But for risky edits, that's the safer choice.) · "What does the user see when it fails?" (The old value comes back, the cell can flash with `api.flashCells`, and an error message names the deal.)
 
 ---
@@ -636,7 +644,7 @@ return (
 - **Cell (range) selection is a different feature**, and it's Enterprise: `cellSelection: true`. The old `enableRangeSelection` is deprecated since v32.2. It powers status-bar sums and range charts.
 - Selection is part of the grid state, so you can save and restore it (Q16).
 
-**Your angle:** Jupiter uses **range selection** with status-bar sums: a trader selects a block of cells and sees the total. `[fill in: which grid, and do any grids use row checkboxes?]`
+**Your angle:** Jupiter uses **cell selection** (called range selection before v32.2) on Live Deal Summary, and the Load Book hedge grid shows a status-bar sum. No Jupiter grid uses row checkboxes. AMP's File Center does: multi-row checkboxes with select-all. In the v33 cleanup you moved AMP to the new click-selection option.
 **Likely follow-ups:** "Let users select only the deals they may edit?" (`isRowSelectable`, and the server checks again.) · "Bulk action on 5,000 selected rows?" (Send the IDs, or the filter, to the server. Don't send 5,000 objects.)
 
 ---
@@ -685,7 +693,7 @@ export const dealsSsrm: IServerSideDatasource<Deal> = {
 
 **Your angle:** These are real Jupiter facts. Use them:
 - Client-side row model with Enterprise modules everywhere. Deal Pricing & Load: ~720–745 hourly rows, 200 per page.
-- The long-term forecast table loads every API page (2,000 rows each) into memory before it shows 100 per page. `[fill in: total rows and load time]`
+- The long-term forecast table loads every API page (2,000 rows each) into memory before it shows 100 per page. The total row count isn't in the code. Other paged grids show 20 per page.
 - A good design answer (you didn't build it, so say "I would"): "If that got slow, I'd measure first. Then I could show the first page right away and add the rest with `applyTransaction` as pages arrive. Or, since we already have Enterprise, move it to the server-side row model."
 
 **Likely follow-ups:** "Why not SSRM everywhere?" (Every sort, filter and group becomes server work and API surface. For small data, client-side is simpler and instant.) · "One million rows?" (SSRM, never all rows in the browser: [05 Q1](05-Frontend-System-Design.md).)
@@ -734,7 +742,13 @@ return (
 - **Bundle size:** register only the modules you use, and lazy-load the grid page.
 - Don't keep `rowData` in a global store that re-renders the whole page on every change.
 
-**Your angle:** In Jupiter, one wide grid turns column virtualisation off on purpose. Know the trade-off. A likely reason, from the docs: auto-size can only measure rendered columns, so turning virtualisation off sizes every column at once. `[fill in: the real reason]` The cost: every column's cells are in the DOM, so keep the rows per page small. Also [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14): on AMP you measured end to end and fixed the biggest part first. More in [03 Q21](03-React-Fundamentals.md).
+**Your angle:** In Jupiter, the **Flash Table** turns column virtualisation off. Another engineer's code comment says why: auto-size can only measure columns with rendered cells, so with 30+ deal columns only the visible half got sized. The column count is small, so rendering every column is cheap. Your October rewrite kept it. The cost: every column's cells are in the DOM, so keep the rows per page small.
+- **Your own grid fixes** (good "slow or broken grid" stories):
+  - The current-hour check built a `Date` for every cell. You cached it for one second.
+  - PnL grids used `autoHeight` and left white space. You set exact heights, and re-fit columns when data arrives late.
+  - ARR/MLC grids collapsed to zero height because of a legend. You moved the legend into the panel header.
+  - Flash Table height follows the visible rows, so filtering leaves no blank band.
+- Also [S14](../AI%20Engineer/13-Behavioral-Story-Bank.md#s14): on AMP you measured end to end and fixed the biggest part first. More in [03 Q21](03-React-Fundamentals.md).
 **Likely follow-ups:** "It's only slow when scrolling?" (Renderers: make them lighter, use `deferRender`, check `rowBuffer`.) · "It's slow to open?" (Usually the data fetch, not the grid. Check the Network tab first.)
 
 ---
@@ -764,7 +778,7 @@ const columnDefs: ColDef<Quote>[] = [
 - **Stale data:** show "last update 10:05:32", grey out prices when the socket is down, and resync with a snapshot after reconnecting ([05 Q5](05-Frontend-System-Design.md)).
 - Respect `prefers-reduced-motion` (Q26 does).
 
-**Your angle:** Be honest: you haven't shipped a streaming grid. `[fill in: does Live Deal Summary update live, or on refresh/polling?]` Your backend strength fits: Redis caching and pub/sub ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)) and fan-out to 3,000+ users ([S12](../AI%20Engineer/13-Behavioral-Story-Bank.md#s12)). Full code in Q26.
+**Your angle:** Be honest: neither app updates a grid live. Jupiter's grids load on mount, on a selection change, or from a Refresh button. One real detail: nothing re-renders the current-hour highlight on a timer, so it may not move when the hour rolls over. The fix: a timer at the next hour that calls `api.refreshCells({ force: true })`, which runs cell class rules again. If the highlight is a row rule, call `api.redrawRows()` instead. Your backend strength fits: Redis caching and pub/sub ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9)) and fan-out to 3,000+ users ([S12](../AI%20Engineer/13-Behavioral-Story-Bank.md#s12)). Full code in Q26.
 **Likely follow-ups:** "1,000 symbols, 10 updates a second each?" (Combine updates on the server, subscribe only to visible rows; Viewport model only at very large scale.) · "How do you test it?" (A fake WebSocket and fake timers; check the transactions.)
 
 ---
@@ -828,7 +842,7 @@ return (
 - **Pinned rows** are Community. v33.3 added user row pinning (`enableRowPinning`); pinning from the context menu is Enterprise.
 - **Official numbers come from the server.** A sum of rounded rows can differ from a rounded total. Decide which one the business wants ([S8](../AI%20Engineer/13-Behavioral-Story-Bank.md#s8)).
 
-**Your angle:** Jupiter uses row grouping and status-bar sums. `[fill in: what Jupiter groups by, e.g. book or month, and what the status bar shows]`
+**Your angle:** Live Deal Summary uses row grouping `[fill in: grouped by what]`. The Load Book hedge grid has a status-bar sum and pinned bottom totals. Your Flash Table has pinned month rows, column groups, and a month accordion you built with your own header and label cell. AMP removed its grouping: it was Enterprise-only.
 **Likely follow-ups:** "Does a pinned total follow the filters?" (Not by itself. Recompute it in `onFilterChanged` with `api.forEachNodeAfterFilter`, or use Enterprise `grandTotalRow`.) · "Group 1 million rows?" (SSRM: the server groups.)
 
 ---
@@ -929,12 +943,17 @@ export const hourCols: ColDef<HourRow>[] = [
 **Your angle:** This is your best AG Grid story: a real bug that crossed the backend, the grids and the export. Tell it in STAR order:
 - **Situation:** how it was found. `[fill in: who noticed, and what they saw]`
 - **Root cause:** date + hour ending → New York local time → one instant for both 1 AM hours.
-- **Where** the conversion happened: `[fill in: API or UI]`
+- **Where:** both sides, about 27 backend and 10 UI commits. `[fill in: where the bad conversion was]`
 - **Fix:** the key, the TZ column, the export order.
-- **Result:** `[fill in: tests added? which screens?]`
+- **Result:**
+  - Price & Load and the long-term forecast got a TZ column after HE, sorted Date, HE, TZ.
+  - The current-hour highlight matches the Eastern date, HE and TZ.
+  - Hedge legs show wall-clock begin and end times.
+  - Excel exports keep both 1 AM rows and carry TZ.
+  - Tests: column placement and sort with TZ, the fall-back-day highlight, and the 25-row exports.
 
 See also [06 Q2](06-Jupiter-Load-Deal-Deep-Dive.md).
-**Likely follow-ups:** "Why not keep everything in UTC?" (UTC is right for storage and math. But traders think in market days and hour-ending labels, so you need both.) · "How did you test it?" (Say what you really did: `[fill in]`. A strong answer: fixed dates for both DST days, checking row counts and order.)
+**Likely follow-ups:** "Why not keep everything in UTC?" (UTC is right for storage and math. But traders think in market days and hour-ending labels, so you need both.) · "How did you test it?" (What you really did: unit tests for column placement and sort with TZ, the fall-back-day highlight, and a 25-row export.)
 
 ---
 
@@ -978,7 +997,8 @@ api.exportDataAsExcel({
 - **Choose what to export:** `columnKeys`, `allColumns`, `onlySelected`.
 - With streaming data, call `flushAsyncTransactions()` before you export.
 
-**Your angle:** Jupiter's Excel exports keep both 1 AM rows on the fall-back day, sorted by TZ (Q14). `[fill in: does Jupiter use api.exportDataAsExcel, or its own export code?]`
+**Your angle:** Jupiter uses both kinds. Three grids use AG Grid's `exportDataAsExcel` (another engineer's). The rest use **exceljs**, also built by another engineer. You added the TZ sort and a Losses % fix, and rewrote the load forecast export for DST, so it keeps both 1 AM rows (Q14). AMP doesn't use grid export: exceljs + file-saver, and hand-built CSV. You fixed a hidden character in a volume table's CSV dates.
+- **Why exceljs, if asked** (a likely reason, not in the code): a hand-built workbook can match a fixed layout. Grid export is best when the file should match the screen.
 **Likely follow-ups:** "Export 2 million rows?" (A server job and a short-lived download link: [05 Q1](05-Frontend-System-Design.md).) · "What the user sees, or everything?" (Ask. Either way, the server applies filters and permissions too.)
 
 ---
@@ -1031,7 +1051,7 @@ return (
 - Debounce the saves, and handle bad or old state (try/catch, a versioned key).
 - **Server layouts:** one endpoint per user + grid ID, and maybe shared "desk views".
 
-**Your angle:** `[fill in: do Jupiter's grids remember layouts?]` If not: "We don't save layouts today. If traders asked, I'd add a per-user layout endpoint behind entitlements ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9))."
+**Your angle:** Two Jupiter grids do. Live Deal Summary saves its column state in session storage, and ST Forecast saves its state in local storage. Neither uses the grid's newer state API (`initialState`, `getState`). Nothing is saved per user on the server. "If traders wanted layouts on every machine, I'd add a per-user layout endpoint behind entitlements ([S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9))."
 **Likely follow-ups:** "A deploy renames a column?" (Versioned key, stable `colId`s, ignore unknown columns.) · "Why not save the row data too?" (State is the layout. Data comes fresh from the API.)
 
 ---
@@ -1109,7 +1129,7 @@ return (
 - **v36:** the scroll DOM changed. Old CSS aimed at containers like `.ag-body-viewport` or `.ag-center-cols-container` breaks. Style cells, not containers.
 - AG Grid's Theme Builder on the website generates the parameters.
 
-**Your angle:** Jupiter uses Tailwind 3 for the rest of the UI. `[fill in: Jupiter's grid theme (Quartz? custom params?) and any red/green PnL rule]`
+**Your angle:** Jupiter uses Tailwind 3 for the rest of the UI. Its grids use the **legacy CSS themes** (alpine, quartz on a few) with `theme="legacy"`. Dark mode swaps the wrapper to the dark theme class, and some grids remount when the theme changes. Negatives get a red class from the shared formatters. AMP uses legacy alpine everywhere. Moving both to the Theming API is a good upgrade step: one theme object, and dark mode through a color scheme, without a remount.
 **Likely follow-ups:** "Why classes instead of `cellStyle`?" (One place for CSS, dark mode, and reuse in Excel.) · "Red in Excel too?" (Yes: an `excelStyles` entry with the same ID as the class.)
 
 ---
@@ -1183,7 +1203,7 @@ return (
 - **Grouping vs tree data:** grouping makes groups from a column's values. Tree data uses a hierarchy that is already in the data.
 - v34.1 allows tree data and master/detail together. For huge trees, SSRM can load children from the server.
 
-**Your angle:** Jupiter uses tree data. `[fill in: on which grid, and what the levels are]`
+**Your angle:** Jupiter uses tree data on ST Forecast and Load Book. `[fill in: what the levels are]` Neither app uses master/detail.
 **Likely follow-ups:** "Keep rows open after a refresh?" (`getRowId`; the grid state also saves which groups are open.) · "Load children lazily?" (SSRM, or master/detail with a fetch in `getDetailRowData`.)
 
 ---
@@ -1273,7 +1293,7 @@ test('edit volume and see it saved', async ({ page }) => {
 - Call `setupAgTestIds()` only outside production.
 - **E2E the flows that matter:** edit and save, export, filters, and the DST days.
 
-**Your angle:** You wrote 68 of the 102 UI test files in Watt with Vitest + Testing Library. Jupiter also uses Vitest. `[fill in: any grid tests in Jupiter? a DST test?]` A DST unit test is a great example: "Nov 1, 2026 has 25 rows, EDT before EST."
+**Your angle:** You wrote 68 of the 102 UI test files in Watt with Vitest + Testing Library. Jupiter also uses Vitest, but **no test mounts a grid**. Your tests cover the logic around the grids: column placement and sort with TZ, the fall-back-day highlight, the 25-row exports, row mappers and the Flash Table model. That's a fair answer: unit-test the pure logic, and test the grid itself in a real browser. AMP has 3 Jest utility tests, none for grids. A DST unit test is a great example: "Nov 1, 2026 has 25 rows, EDT before EST."
 **Likely follow-ups:** "Why not snapshot the grid?" (Big, brittle, and virtualized.) · "How do you test the datasource?" (Mock `fetch` and check the request body and the rows passed to `successCallback`.)
 
 ---
@@ -1346,7 +1366,7 @@ export function AwardsVsHedges(
 - AG Charts also uses modules: register `AllCommunityModule` from `ag-charts-community`.
 - Chart libraries are big. Lazy-load chart pages ([03 Q14](03-React-Fundamentals.md)).
 
-**Your angle:** Jupiter has integrated charts on the Live Deal Summary grid, and Load Book uses standalone AG Charts for awards vs hedges. It also uses ApexCharts and Vega-Lite ([06](06-Jupiter-Load-Deal-Deep-Dive.md)). `[fill in: who built these charts, and why AG Charts there]`
+**Your angle:** Jupiter has integrated charts on the Live Deal Summary grid, and Load Book uses standalone AG Charts for awards vs hedges. It also uses ApexCharts and Vega-Lite ([06](06-Jupiter-Load-Deal-Deep-Dive.md)). Integrated charts need AG Charts Enterprise (12.3.1 here), registered with the grid in the entry file. `[fill in: who built these charts, and why AG Charts there]`
 **Likely follow-ups:** "Integrated or standalone?" (Integrated: users explore ad hoc. Standalone: a fixed, designed chart.) · "Why three chart libraries?" ([06](06-Jupiter-Load-Deal-Deep-Dive.md))
 
 ---
@@ -1403,7 +1423,7 @@ export function ResultTable(
 - **Big results:** limit rows on the server (the agent uses a read-only database role) and show "first N rows".
 - **AI output is untrusted text.** The grid shows values as text, so don't render HTML from it. If users export to CSV, escape formula characters (Q15).
 
-**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1): Load Deal AI's chat page shows the SQL, the result table and a chart. `[fill in: how your code builds the column defs, any formatting by type, and the row limit]` Say only what your code really does. For the rest, say "I would".
+**Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1): Load Deal AI's chat page shows the SQL, the result table and a chart. You built the result table and its formatter (Sep 2026). You also fixed a 130px blank band in dark mode by making the tall drop zone opt-in. `[fill in: how your code builds the column defs, and the row limit]` Say only what your code really does. For the rest, say "I would".
 **Likely follow-ups:** "The model returns 100,000 rows?" (A server-side limit and paging.) · "Column order?" (Keep the SQL order.)
 
 ---
@@ -1451,7 +1471,11 @@ const onRateChange = useCallback((next: number) => {
   - **A value is missing in Excel** → only a renderer draws it (Q4).
   - **Two "1 AM" rows become one** → ambiguous times as keys (Q14).
 
-**Your angle:** Use this as your review checklist. You approved 26 grid PRs on Jupiter ([M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1)). `[fill in: one real grid bug you caught or fixed]`
+**Your angle:** Use this as your review checklist. You approved 26 grid PRs on Jupiter ([M1](../AI%20Engineer/13-Behavioral-Story-Bank.md#m1)). Real grid bugs you fixed:
+- **AMP:** grouping props and a set filter with no Enterprise package. They never worked. You removed them.
+- **AMP:** a duplicate row ID on File Center. You added the folder name to the key.
+- **Jupiter:** ARR/MLC grids collapsed to zero height because of a legend.
+- **Jupiter:** a `Date` built for every cell in the current-hour check.
 **Likely follow-ups:** "How do you stop these in review?" (The hooks lint rule, a shared grid wrapper with stable defaults, and dev validations on.)
 
 ---
@@ -1470,7 +1494,12 @@ const onRateChange = useCallback((next: number) => {
   - container classes like `.ag-body-viewport` and `.ag-center-cols-container` were replaced
 - **Plan:** a branch per major version, a visual check of each grid, and E2E tests for edit, filter and export.
 
-**Your angle:** Jupiter's version: `[fill in]`. AMP is React 18 on Create React App with AG Grid: `[fill in: its AG Grid version]`. If AMP is on an old AG Grid, that's a real upgrade plan to discuss together with CRA → Vite ([03 Q16](03-React-Fundamentals.md)).
+**Your angle:** Jupiter is on **34.3.1 Enterprise** and AMP on **33.2.1 Community**. Both are past v33, but both still use legacy CSS themes. You did AMP's v33 cleanup yourself, on Mar 4, 2026, in 3 commits:
+- removed Enterprise-only props that weren't registered
+- fixed the selection deprecations and page-size mismatches
+- added `theme="legacy"` to nine grids, and fixed a duplicate row ID
+
+One AMP grid still lacks `theme="legacy"` and uses old selection props. **Next steps to 36:** the Theming API, a check for CSS that targets the old scroll containers, and `AgGridProvider`. For AMP, do it together with CRA → Vite ([03 Q16](03-React-Fundamentals.md)).
 **Likely follow-ups:** "Why upgrade at all?" (Fixes, React 19 support, smaller bundles, new features.) · "How do you lower the risk?" (One major at a time, codemods, E2E on key flows.)
 
 ---

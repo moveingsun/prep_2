@@ -210,7 +210,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 
 ### Q9. Ask AI: why job + poll, and how does the chat UI work?  `[P0]`
 **Say this first (~30 sec):**
-> "My design doc ruled out streaming at first. Our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So the UI posts a question and gets a job ID. Job state is in Redis, so any pod can answer a poll. The UI polls every 2 seconds, slows to 5 after 30 seconds, and stops at 10 minutes. Answers show as Markdown with a SQL block, an AG Grid table and a Vega-Lite chart. In October I moved it to our shared chat package, which streams in short windows, each under the gateway limit, and falls back to polling."
+> "My design doc ruled out streaming at first. Our gateway buffers and cuts long connections, and the load balancer drops idle ones after about four minutes. So the UI posts a question and gets a job ID. Job state is in Redis, so any pod can answer a poll. The UI polls every 2 seconds, slows to 5 after 30 seconds, and stops at 10 minutes. Answers show as Markdown with a SQL block, an AG Grid table and a Vega-Lite chart. In October I moved it to our shared chat package, which streams in 40-second windows, under the gateway limit, and falls back to polling."
 
 **If they dig deeper:**
 - **Safety:**
@@ -221,7 +221,7 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 - **Cost:** every turn logs its Cortex usage, and an admin endpoint reports the cost in dollars.
 - **History** moved from the browser's local storage to server threads.
 - **The shared chat package** is the Watt chat library you built: a Redis event log, SSE, and resume from the last event ID ([07 Q11](07-Watt-AI-Platform-Deep-Dive.md)). Jupiter adopted it a week after the Watt apps.
-- **Window size:** the Jupiter reply said 40 seconds; Watt uses 170. `[confirm which Jupiter uses, and why]`
+- **Window size:** Jupiter uses the library default, **40 seconds**, sized for a shorter gateway limit. Watt's AI services use 170 seconds since their gateway allowed 180. If Jupiter's route allows 180 too, raising its window would mean fewer reconnects. `[fill in: does it?]`
 - **Agents:** Snowflake Cortex with a semantic view, plus LangGraph with citation checks and a 20-question eval set ([S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1)).
 - You built all of it.
 
@@ -240,12 +240,13 @@ Before Jupiter, they used Excel: a proforma workbook per deal, a variance-analys
 
 ### Q11. How does Jupiter use AG Grid?  `[P0]`
 **Say this first (~30 sec):**
-> "Every grid uses the client-side row model with the Enterprise modules. Deal Pricing & Load shows a month of hourly rows, about 720 to 745, at 200 per page. The long-term forecast loads all API pages, 2000 rows at a time, into memory and shows 100 per page. We use tree data, row grouping, range selection, status-bar sums, and integrated charts on Live Deal Summary. Another engineer built most grids. My grid work was the DST fix: a TZ column and correct 23- and 25-hour days, also in Excel export."
+> "Every grid uses the client-side row model with the Enterprise modules. Deal Pricing & Load shows a month of hourly rows, about 720 to 745, at 200 per page. The long-term forecast loads all API pages, 2000 rows at a time, into memory and shows 100 per page. We use AG Grid Enterprise 34: tree data, row grouping, set filters, cell selection, status-bar sums, and integrated charts on Live Deal Summary. Another engineer built most grids. My grid work: I rewrote the Portfolio PnL Flash Table, and I fixed DST across the grids and Excel exports, with a TZ column and correct 23- and 25-hour days."
 
 **If they dig deeper:**
 - **Why client-side is fine here:** a few thousand rows fit easily in memory, and AG Grid virtualizes the DOM. The server-side row model pays off at hundreds of thousands of rows, or when grouping must happen on the server.
-- One wide grid turns **column virtualization off** on purpose `[fill in: why, e.g., auto-sizing or export]`.
-- AG Grid version: `[fill in]`. All the details are in [08 · AG Grid](08-AG-Grid.md).
+- The **Flash Table** turns **column virtualization off**: auto-size can only measure rendered columns, and it has 30+ deal columns.
+- **Version:** 34.3.1 Enterprise, with legacy CSS themes. Rows are replaced as a whole; there are no transactions and no live updates.
+- All the details are in [08 · AG Grid](08-AG-Grid.md).
 
 **Likely follow-ups:** "When would you switch to the server-side row model?" · "How do you keep a grid fast with live updates?" ([08](08-AG-Grid.md))
 

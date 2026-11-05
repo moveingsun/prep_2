@@ -13,8 +13,8 @@ Kurt runs a separate Claude session on his BETM work laptop. It can read BETM's 
 |---|---|---|---|
 | 1 | UI facts per project (stack, Kurt's commits, others' work, numbers) | 2026-11-03 | Answered 2026-11-03 → `knowledge.md` §3 |
 | 2 | Design Q&A for Jupiter and Watt (28 questions) | 2026-11-03 | Jupiter part answered 2026-11-03 → page 06. Watt + BOTH answered 2026-11-04 → `knowledge.md` §3 and page 07 |
-| 3 | AG Grid usage in Jupiter and AMP | given to Kurt 2026-11-03 | Waiting |
-| 4 | Follow-ups on page 07's `[confirm]`s | given to Kurt 2026-11-04 | Waiting |
+| 3 | AG Grid usage in Jupiter and AMP (+ items 12–15 added 2026-11-04) | sent 2026-11-04 (the 15-item version) | Answered 2026-11-04 (both parts) → `knowledge.md` §3, pages 08, 06, 07 |
+| 4 | Follow-ups on page 07's `[confirm]`s | given to Kurt 2026-11-04 | Answered 2026-11-04 → `knowledge.md` §3 and page 07 |
 
 The first reply leaked a colleague's name. Remove names before you copy anything into the repo.
 
@@ -175,6 +175,22 @@ For each app:
 10. How grids are tested, if at all.
 11. The grid code I wrote myself (use
     git authors), in 3-5 bullets.
+12. Excel export: AG Grid's own
+    exportDataAsExcel, or another
+    library? Who wrote it?
+13. Does any grid update live (timer,
+    polling, push), or only on load?
+14. Jupiter turns column
+    virtualisation off on one wide
+    grid. Why? (commit message or
+    comment)
+
+Watt, one last question:
+15. If a bad app version is rolled
+    back by pointing the registry at
+    the old version, would the
+    5-minute sync point it at the
+    newest version again?
 
 Rules:
 - Read-only. Don't edit, commit, or
@@ -186,6 +202,8 @@ Rules:
   trade/customer data, or people's
   names (say "another engineer").
 - Plain text, no tables.
+- Answer JUPITER first. When I say
+  "next", answer AMP and question 15.
 ```
 
 ## Message 4: Watt follow-ups (as given to Kurt)

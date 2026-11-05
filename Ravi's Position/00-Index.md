@@ -77,6 +77,6 @@ About **2–3 hours a day**. If the interview date moves, keep the order and shi
 - [x] **New resume:** the full-stack version is in the "Kurt Wang Resume" Claude Doc (first tab).
 - [x] **3 resume claims confirmed:** AMP is now "owned … leading contract engineers" (not "sole"); the PnL latency number is removed; the AMP landing page is **~10s → 5s** everywhere.
 - [x] **Company-session reply #2** (design Q&A for Jupiter and Watt): applied to pages 01–07 on Nov 3–4.
-- [ ] **Company-session reply #4** (short follow-ups) → the `[confirm]`s in page 07.
-- [ ] **Company-session reply #3** (how Jupiter and AMP use AG Grid) → the `[fill in]` gaps in page 08.
+- [x] **Company-session reply #4** (short follow-ups): applied to pages 07, 06, 05 and 02 on Nov 4.
+- [x] **Company-session reply #3** (how Jupiter and AMP use AG Grid): applied to pages 08, 06 and 07 on Nov 4. The `[fill in]`s left are things only you know.
 - [ ] Interview date, format and interviewer names.

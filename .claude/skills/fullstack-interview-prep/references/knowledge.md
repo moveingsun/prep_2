@@ -116,7 +116,7 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
   - The agent uses a read-only database role and fails closed.
   - Each turn's Cortex cost is logged. History moved to server threads.
   - In **Oct 2026** Ask AI moved to the shared chat package (Kurt's Watt chat library), which streams in short windows and falls back to polling. The resume still says "job polling" (Kurt chose to keep it).
-  - **Unresolved:** reply #2's Jupiter part said **40-second** windows; the Watt part says the library uses **170 s** under a 180 s gateway limit, and an early test saw a cut at **61.1 s**. The guide says "short windows" and marks `[confirm]`. Message #4 asks.
+  - **Window sizes (reply #4):** Jupiter still uses the library default **40 s** (sized for a 45 s gateway). Watt's AI services use **170 s** since 2026-10-13 (180 s unbuffered stream policy). Whether Jupiter's route allows 180 s: unsure.
 - **Upload validation:**
   - 10 MB limit; the steps are create → validate → store raw → process.
   - Weak spots: required fields aren't enforced, the error message is generic, and a failed upload doesn't roll back the deal row.
@@ -143,6 +143,44 @@ Source: the company-laptop session's git-history reply, 2026-11-03. Commit count
 - **Data Validation UI (mostly Kurt):** Create Rule and Diagnose chat modes, Run history, Monitors (pipelines, datasets), Capabilities, admin bundle; hash router. Forms: required names, positive freshness, filter rows (no duplicates, max 10); server Pydantic 422 (bad cron, unknown time zone). Run history: server paging 25/page, search, filters, sort; unknown filter → 422. Chat actions run only if they exactly match an open proposal, else 409. Deleting a dataset in use → 409 naming the suite. LLM cost per run to 4 decimals (judge call ≈ $0.0004). 22 UI test files (~124 cases); service ~130 test files, last run 2,295 passed. Another engineer moved its chat pages onto chat-kit in Oct.
 - **Failure handling (mostly another engineer):** 401 → retry sign-in once, then "Sign-in required"; 403 "Access denied"; 503/network "Apps unavailable" + Try again; expired link → refetch once, then "session timed out". Health checks every 60 s while visible (8 s timeout). Permission changes apply on the next reload; nothing pushes to open tabs. **Kurt's:** the server-side 503 rule and the admin expired-link fix.
 - **Hardest problems (Kurt's):** (1) the gateway cutting long AI turns → the resumable streaming design; (2) production lifecycle bugs: a repair step overwrote just-finished turns (now re-reads, only touches running turns); on **2026-10-21** every Jupiter Ask AI turn failed ("event log unavailable", 503) because the production geo-replicated Redis runs streams in strict ID mode and rejected the library's IDs. Same-day hotfix, then a library fix + a strict-ID fake in tests. Polled events also lacked IDs (duplicates); now every event is numbered.
+
+### Watt follow-ups (company reply #4, 2026-11-04)
+- **Gateway limit:** the 61.1 s cut was on the Data Validation chat route, dev/stage, 2026-08-28: a hard 60 s cap with data flowing (not idle); infra was asked to raise it. The spec says Azure Application Gateway has a fixed total timeout of 60 or 180 s per route. 2026-10-13: AI services moved to 170 s windows and the gateway got an unbuffered 180 s stream policy. Same setting raised or a different route: unsure.
+- **chat-kit client:** `fetch` streaming, not EventSource (needs the Authorization header). Headers (token, gateway key, product) rebuilt on every request. Events are JSON cast to the schema-generated types; no zod/ajv, a few hand-written guards (rows, confirm, SQL).
+- **Bundles:** each app bundles its own React. `mount` returns `{ unmount }`. Each app creates its own shadow root inside the element the shell gives it (main and admin bundles).
+- **Data-route access (sensitive, honest gap):** no app checks app-level access on data routes. Doc Intelligence filters searches by document access tags (switch on in dev, off in stage; fails closed when on). Ask Data uses the user's warehouse role (OBO). Data Validation (Kurt's) relies on the token + caller identity only. The guide coaches calling it "the next hardening step", without extra detail.
+- **Strict-ID fix:** the library wrote IDs as `n-1` (full ID, rejected by strict mode); now writes `n` and Redis fills the sequence (region ID in strict mode, `0` in plain Redis). Reads/resume use only the counter. Tests use a strict-ID fake Redis.
+- **Rollback:** the architecture doc says re-point the registry at the previous immutable version (no shell rebuild). Whether the 5-min sync re-picks the newest: unsure.
+- **sessionStorage:** another engineer moved the token cache there on 2026-09-25 so sign-in ends when the tab/browser closes; deep links in a new tab try silent sign-in. No security reason is written down.
+- **Hash router:** Kurt's 2026-08-08 commit, "dependency-free hash router (refresh-proof for a static SPA)".
+- **Apps:** Doc Intelligence = the Ask Knowledge UI and service (slug renamed 2026-09-22). Memory = people see and edit what the AI apps remember about them; super admins see everyone's.
+
+### AG Grid in Jupiter and AMP (company reply #3, 2026-11-04)
+**Jupiter** (develop branch):
+- **34.3.1 Enterprise** (community, enterprise, react pinned) + AG Charts Enterprise 12.3.1. Licence set once in the entry file (an env-var move was reverted). Entry registers `AllEnterpriseModule` + integrated charts; two lazy grids also register `AllCommunityModule` (redundant).
+- **Legacy CSS themes** (alpine; quartz on a few) with `theme="legacy"`; dark mode swaps the wrapper class; some grids remount on theme change. No Theming API.
+- **Client-side row model** everywhere. Deal Pricing & Load ~720–745 rows, 200/page; long-term forecast pulls 2,000-row pages, shows 100/page (total unknown); other paged grids 20/page.
+- **Features:** Live Deal Summary (set filters, row grouping, side bar, cell selection, integrated charts, Excel export, column state in sessionStorage); ST Forecast (tree data, set filters, Excel export, state in localStorage); Load Book (tree data, editable scenario cells; hedge grid has status-bar sum, pinned bottom totals, floating filters); Price & Load (floating + date filters, pinned Date, sort Date→HE→TZ, overrides in a modal); Flash Table (quick filter, pinned month rows, column groups, 30+ deal columns). Not used: master/detail, pivot, undo/redo, grid state API, CSV export.
+- **Updates:** rowData replaced from state/useMemo; no transactions; `getRowId` only on two admin grids (another engineer). **No live updates**; the current-hour highlight has no timer.
+- **Kurt's renderers:** month group header (fold/unfold), deal label cell (month chevron / indented deal), ARR/MLC unsettled-day tooltip, hedge block-hours header tooltip. Others' renderers: badges, links, action buttons, row-drag delete, role switch. Editors: only the built-in select (Settings).
+- **Formatters:** shared (another engineer): 2 decimals, accounting currency, ISO dates, red class for negatives. Kurt: the Ask AI table formatter.
+- **Column defs:** newer grids typed `ColDef<T>` / `ColGroupDef<T>`, older files loose; helper factories (priority formatting, overrides, current-hour highlight); mostly `useMemo`; no `columnTypes`.
+- **Column virtualisation off** in the Flash Table: another engineer's comment says auto-size only measures rendered columns, so only ~half of 30+ columns got sized. Kurt's rewrite kept it.
+- **Kurt's grid fixes:** exact heights instead of `autoHeight` + re-fit on late data; ARR/MLC zero-height grids (legend moved to the panel header); Ask AI 130px dark-mode band (tall drop zone opt-in); current-hour `Date` per cell → cached 1 s; Flash Table height follows visible rows. `rowBuffer=10` is another engineer's, no reason given.
+- **Tests:** Vitest; no test mounts a grid. Kurt's tests: TZ column placement/sort, fall-back-day highlight, 25-row exports, row mappers, the Flash Table model.
+- **Kurt's grid code:** Portfolio PnL Flash Table rewrite (2026-10-22); DST across grids and exports (2026-10-20); PnL Summary grid sizing and data wiring (Jul–Aug); Ask AI result table + Admin usage panel (Sep); ARR/MLC labels and tooltips (Aug).
+- **Excel:** 3 grids use `exportDataAsExcel` (another engineer); the rest use exceljs (another engineer). Kurt added the TZ sort and the Losses % fix, and rewrote the load forecast export for DST.
+
+**AMP** (develop as of late Aug 2026; Kurt's last AMP commit 2026-08-21):
+- **33.2.1 Community**, no Enterprise, no licence. Another engineer had added Enterprise-only grouping props and a set filter in 2025; Kurt removed them in Mar 2026 ("Enterprise-only, unregistered") and used a text filter.
+- Most grids register only client-side row model, text filter, pagination; File Center registers `AllCommunityModule`. Legacy alpine everywhere; Kurt added `theme="legacy"` to nine grids; one grid still lacks it and uses deprecated selection props.
+- 13 grids (12 Admin + File Center), client-side with pagination (15–100/page), hundreds of rows likely. Shared custom sort header; Admin filtering is a search bar outside the grid; File Center has text + custom floating filters, an external filter, and multi-row checkbox selection.
+- All renderers by another engineer; no editors. Kurt's formatters join arrays into comma lists. File Center shows UTC dates but filters on local dates (possible mismatch, not verified).
+- Column defs mostly untyped arrays in `useMemo`; only File Center uses `ColDef<T>`.
+- **Kurt created no AMP grid.** His grid work = the v33 cleanup on **2026-03-04** (3 commits): removed unregistered Enterprise props, fixed v33 deprecations on six tables, replaced the set filter, added `theme="legacy"`, moved to the new click-selection option, fixed the File Center duplicate row ID.
+- Exports: exceljs + file-saver + hand-built CSV (another engineer, Feb 2025). Kurt fixed a hidden character in a volume table's CSV dates and the price table's export values. No live grid updates. Tests: 3 Jest utility files, none for grids.
+
+**Watt rollback (Q15, corrects reply #4):** the sync picks the highest semver in blob storage and writes it back; no pin/hold flag. Supported rollback = **delete the newer blob** (sync code + Kurt's design doc). The shell's ARCHITECTURE.md is out of date ("re-point the registry"). The bundle container has a time-based immutability policy that may block deletes, so the practical fix may be to publish a corrected higher version. Kurt built the service, the design doc and the sync job.
 
 ### AMP: Asset Management Platform
 - **Stack:** React 18, TypeScript, **Create React App**, **AG Grid**, ECharts, Highcharts, Chart.js, embedded Power BI, React Context, Dexie, MSAL, Datadog RUM.
@@ -177,7 +215,8 @@ Kurt's own base resume (`Resume/Kurt_Wang_Resume.pdf`, 1 page, uploaded 2026-11-
 - **TypeScript 7.0.2** (the native Go port, released July 2026). 7.1 is in beta. TS 6.0 (Mar 2026) was the last JavaScript-based version and made `strict` the default.
 - **Next.js 16.x.** MSW v3. React Router: npm shows 8.x, but react.dev still says v7, so the guide gives no version.
 - **RFC 10017** (OAuth 2.0 for Browser-Based Apps, Aug 2026) exists and recommends a BFF.
-- **AG Grid 36.2.0** (Sept 16, 2026; npm `latest`; there's also a `v32-lts` line). Modules have been required since v33, `AgGridProvider` since v35.1, and the Theming API (`themeQuartz`, no CSS import) since v33. `rowSelection` has been an object (`{ mode: 'multiRow' }`) since v32.2. Page 08 targets 36.2.0. Jupiter's own version is still unknown.
+- **AG Grid 36.2.0** (Sept 16, 2026; npm `latest`; there's also a `v32-lts` line). Modules have been required since v33, `AgGridProvider` since v35.1, and the Theming API (`themeQuartz`, no CSS import) since v33. `rowSelection` has been an object (`{ mode: 'multiRow' }`) since v32.2. 36.2.0 still accepts `theme: 'legacy'` and ships the alpine/quartz CSS. Page 08 targets 36.2.0.
+- **Kurt's apps (checked on npm 2026-11-04):** Jupiter 34.3.1 (2025-10-29), AMP 33.2.1 (2025-03-24), AG Charts Enterprise 12.3.1.
 
 ## 7. Workflow and tools
 - **Remote Control** lets claude.ai/code or the phone app drive this Mac's session. It **cannot** attach from another CLI.
@@ -188,7 +227,8 @@ Kurt's own base resume (`Resume/Kurt_Wang_Resume.pdf`, 1 page, uploaded 2026-11-
 ## 8. Open items
 - [x] Message #2, Jupiter part: received 2026-11-03 and applied to pages 01, 05 and 06.
 - [x] Message #2, Watt + BOTH part: received 2026-11-04 and applied to pages 07, 06, 05, 04, 03, 02, 01 and story S7.
-- [ ] Message #4 (the `[confirm]`s on page 07: gateway 61.1 s vs 180 s, Jupiter's 40 s window, EventSource vs fetch, shared React, data-route access checks, the strict-ID fix, rollback).
-- [ ] The company-session reply to the AG Grid message → fill `08-AG-Grid.md` (version, license, row model, features).
+- [x] Message #4 (follow-ups on page 07): answered 2026-11-04 and applied to pages 07, 06, 05 and 02.
+- [ ] Kurt-only gaps left: production user count, time to add an app, spec changes, PR feedback examples, why Price & Load uses a modal, what Live Deal Summary groups by, tree-data levels, who first noticed the DST bug.
+- [x] Message #3 (AG Grid, Jupiter + AMP + Watt rollback): answered 2026-11-04 and applied to pages 08, 06 and 07.
 - [ ] The interview date, the company and the format.
 - [ ] Kurt fixes "sole" and "20s" in his own 1-page base resume.

@@ -4,13 +4,13 @@
 
 > **Why this matters for this role:** Watt is a frontend-architecture story: one shell, many apps, one sign-in, and permissions sent down to the UI. Full-stack interviewers like to dig into exactly this: how apps are loaded, how the UI knows what to show, and why hiding a button is not security. It also has your strongest full-stack story: the streaming chat API that every chat app uses.
 
-**Status:** filled from the company-session replies of Nov 3 and Nov 4 (code, git history and design docs). A few `[confirm]`s remain. Message #4 to the company session asks about them.
+**Status:** filled from the company-session replies #1, #2 and #4 (Nov 3–4: code, git history and design docs). The `[fill in]`s left are things only you know.
 
 ## Primer
 
 ### Who built what (from git history)
 - **You, backend:**
-  - the **app registry** in the entitlements service, and its design doc (12 commits)
+  - the **app registry** in the entitlements service, its design doc (12 commits), and the 5-minute version sync
   - the **signed bundle links** (the signing service)
   - the server side of **UI-element permissions** (sorting them per app)
   - most of the **gateway policies** for the app APIs, and backend auth
@@ -18,9 +18,9 @@
   - the per-app token scope and **on-behalf-of token exchange** for Ask Data
   - the app backends, and the cost endpoints
 - **You, frontend** (about 239 commits across 4 UI repos, Aug–Nov 2026):
-  - **Data Validation UI**, mostly yours
+  - **Data Validation UI**, mostly yours, including its small hash router
   - **Ask Data UI**: you created it
-  - part of **Ask Knowledge**: uploads, PDF citation highlighting
+  - part of **Ask Knowledge** (now called Doc Intelligence): uploads, PDF citation highlighting
   - the **admin-kit** package (13 commits), used by 3 apps
   - a fix in the shell's admin sections (expired links)
   - **68 of the 102** UI test files
@@ -35,7 +35,11 @@
 React 19, TypeScript, Vite 8, Tailwind 4, React Router, MSAL (Microsoft Entra sign-in), hooks and Context (no state library), Recharts, Vega-Lite, Vitest + Testing Library, Datadog RUM.
 
 ### Facts you can use
-- **4 apps** are on Watt: Doc Intelligence, Data Intelligence (Ask Data), Data Validation and Memory. `[confirm: Doc Intelligence = the Ask Knowledge UI?]`
+- **4 apps** are on Watt:
+  - **Doc Intelligence**: the Ask Knowledge UI and service (renamed Sept 22)
+  - **Data Intelligence** (Ask Data)
+  - **Data Validation**
+  - **Memory**: people see and edit what the AI apps remember about them. Super admins can see everyone's.
 - **Users:** a dev/stage script grants 6 users. The production count is unknown. **Don't guess a number.** Say "an internal platform for `[fill in: which teams]`".
 - **Before Watt:** the app list was a file built into the shell. Every signed-in user saw every app, and the app bundles could be downloaded **without signing in**.
 - **Goal** (from your registry design doc): a user sees exactly the apps their AI role grants.
@@ -62,8 +66,8 @@ Blob store: versioned mount.js
 1. The shell signs the user in with **Microsoft Entra** (MSAL).
 2. It asks the **entitlements service**, through the gateway, for the user's apps.
 3. The service checks the token, reads the user's grants from **Redis or SQL**, and returns only the allowed apps. Each app comes with a **signed link to its bundle that lasts 5 minutes**, plus its UI elements.
-4. The shell checks the link's host, then **`import()`s the bundle** and calls `mount(container, host)`. The app renders in its own **shadow root**, with its own CSS.
-5. The app calls **its own FastAPI backend** through the gateway, with a token it gets from the shell. The gateway checks the token, and **the backend checks it again**.
+4. The shell checks the link's host, then **`import()`s the bundle** and calls `mount(container, host)`. The app makes its own **shadow root** inside that element and renders there, with its own CSS. `mount` returns an object with `unmount`.
+5. The app calls **its own FastAPI backend** through the gateway, with a token it gets from the shell. The gateway checks the token, and **the backend checks it again**. (Data routes don't check app access yet: see Q5.)
 6. In the background, a job runs **every 5 minutes** and points each app at its newest published version.
 
 ### The 2-minute walkthrough (use this order)
@@ -111,7 +115,9 @@ Blob store: versioned mount.js
 **If they dig deeper:**
 - **The bundle contract:** contract version 1. The bundle exports `meta` and `mount`, plus an optional `admin.js`.
 - **Releases:** bundles go to semver folders. The pipeline **refuses to overwrite** an existing version. A job runs the sync route every 5 minutes, and it points each app at its newest version.
-- **Rollback:** `[confirm: re-point the version, or publish a new patch?]`
+- **Rollback** (your sync job and design doc): the sync picks the **highest semver** in blob storage, and there's no pin. So the supported rollback is to **delete the newer version's blob**. The sync then falls back to the highest version left.
+  - The shell's architecture doc still says "point the registry at the old version". The code doesn't support that, and the sync would undo it in 5 minutes.
+  - **Catch:** the bundle container has a time-based immutability policy, which usually blocks deletes until retention ends. So right after a bad release, the practical fix is to **roll forward**: publish a fixed, higher version.
 - **An app that isn't fully configured returns 503**, never a half-built entry. That's your rule.
 - This replaced a registry file built into the shell, where every user got every app.
 
@@ -132,7 +138,7 @@ Blob store: versioned mount.js
   - **One big app:** simplest. But one release for everyone, and every user downloads every app.
   - **iframes:** strongest isolation. But sign-in, theme and navigation are hard to share, and it's heavier.
   - **Module Federation:** can share libraries such as React. But all apps need matching build setups.
-  - **`import()` of a URL (Watt):** simple and independent. Each bundle may carry its own copy of React. `[confirm]`
+  - **`import()` of a URL (Watt):** simple and independent. **Each bundle carries its own React** (no build marks React as external). That works because each app is its own React root. The cost: users download React once per app.
 - **How you'd write the loader in an interview** (a sketch, not the real code):
 
 ```ts
@@ -151,25 +157,32 @@ async function loadApp(
   const mod: AppModule = await import(
     /* @vite-ignore */ entryUrl
   );
-  mod.mount(el, host);
+  // Keep the handle to unmount later.
+  return mod.mount(el, host);
 }
 ```
 
 - **Two details to know:** `import()` fetches modules with CORS, so the storage must allow the shell's origin. And `/* @vite-ignore */` tells Vite the URL is only known at run time.
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3). You built the signing side. Another engineer built the loader.
-**Likely follow-ups:** "What if a link expires while the user works?" (Q13) · "Do the apps share React?" `[confirm]`
+**Likely follow-ups:** "What if a link expires while the user works?" (Q13) · "Do the apps share React?" → "No, each bundles its own. Apps are separate React roots, so shell context can't reach them anyway. The host object is the bridge. To cut download size, an import map could share one React, but then all apps must upgrade React together."
 
 ---
 
 ### Q5. How do UI-element permissions work? Isn't hiding a button insecure?  `[P0]`
 **Say this first (~30 sec):**
-> "Hiding a button is not security. The server is the real check. UI permissions come in the same call as the app list. My server code sorts them. A path like /app-slug means access to the app. /app-slug/something goes into that app's own list. Anything else is a shell element, like the Admin tab, with a privilege level. The shell drops any entry it can't parse, so it fails closed. Small helpers then decide things like whether to show the Admin tab."
+> "Hiding a button is not security. UI permissions come in the same call as the app list. My server code sorts them. A path like /app-slug means access to the app. /app-slug/something goes into that app's own list. Anything else is a shell element, like the Admin tab. The shell drops any entry it can't parse, so it fails closed. On the server, every backend checks the token, and admin routes re-check entitlements. To be honest, data routes don't check app access yet. That's the first thing I'd harden."
 
 **If they dig deeper:**
 - Each app gets **a snapshot of its list** when it mounts.
 - **Honest gap:** no app reads its list yet. Today the shell uses these permissions (Admin tab, super admin, which apps you can manage). Say "the plumbing is there; the apps don't use it yet."
 - **On the server:** every backend checks the token. Admin routes also re-check entitlements, with a 5-minute cache per user. A permission change must be allowed for **every domain** it touches.
+- **What each app checks on its data routes today:**
+  - **Doc Intelligence** filters every search by the user's document access tags. It's behind a switch: on in dev, off in stage. When on, it fails closed.
+  - **Ask Data** queries with the user's own warehouse role (on-behalf-of), so the warehouse enforces access.
+  - **Data Validation** (yours) checks the token and who is calling, but not app access.
+- **The fix:** one middleware that checks the app permission on every data route. Your entitlement checks take ~10 ms, so it's cheap.
+- **How to say it:** call it the next hardening step, not a confession. Don't add more detail about a live gap at your current company than the question needs.
 - If they ask for code, a typed hook is a clean answer:
 
 ```ts
@@ -180,7 +193,7 @@ function useUiElement(name: string) {
 ```
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "If I have a token but no access to an app, can I call its API?" `[confirm: does every data route re-check app access?]` · "How does a change reach a user who is already signed in?" (Q13)
+**Likely follow-ups:** "If I have a token but no access to an app, can I call its API?" → "The gateway and backend check the token, and the shell hides apps you can't use. Per-app checks on data routes are the next step; today Ask Data relies on the warehouse role instead." · "How does a change reach a user who is already signed in?" (Q13)
 
 ---
 
@@ -191,7 +204,7 @@ function useUiElement(name: string) {
 **If they dig deeper:**
 - **The host object:** user, `getAuthToken(scopes)`, API base URL, gateway key, UI elements, theme, route and telemetry.
 - **Ask Data asks for its own token scope.** Its backend swaps the user's token for a warehouse token for that user (on-behalf-of). You built that.
-- **Local storage was tried and reverted.** It gave sign-in across tabs. `[fill in: why it was reverted]`
+- **Why session storage:** another engineer moved the token cache there on Sept 25, so sign-in ends when the tab or browser closes. A deep link in a new tab tries a silent sign-in, which covers the cross-tab case. No security reason is written down, so don't invent one.
 - **The 22-hour clock** is in local storage, so all tabs agree. The code says it's a convenience rule, not a security boundary.
 - **"Isn't the gateway key in the browser a secret?"** No. In a browser app it can't be secret. It tells the gateway which product the call belongs to. The real check is the token, at the gateway and in every backend.
 
@@ -250,7 +263,24 @@ function useUiElement(name: string) {
 - **Human in the loop:** a chat change needs a confirm step. The server only runs an action that **exactly matches an open proposal**. Otherwise it returns 409.
 - **Deleting a dataset still in use** returns 409, naming the suite that uses it.
 - **Cost:** each run shows its LLM cost to 4 decimals. A judge call costs about $0.0004.
-- **Routing:** a small hash router. `[confirm: so it doesn't fight the shell over the URL path?]`
+- **Routing:** a small hash router with no dependencies. You wrote it. Your commit calls it "refresh-proof for a static SPA". The bundle is a static file, so with path routing a refresh on `/runs` would ask the server for a path it doesn't have. With `#/runs`, the path stays in the browser.
+- **If they ask you to write one** (a sketch):
+
+```ts
+function subscribe(cb: () => void) {
+  window.addEventListener('hashchange', cb);
+  return () =>
+    window.removeEventListener('hashchange', cb);
+}
+
+function useHashPath() {
+  return useSyncExternalStore(
+    subscribe,
+    () => location.hash.slice(1) || '/',
+  );
+}
+```
+
 - **Tests:** 22 UI test files (~124 cases). The service has ~130 test files, and its last run passed 2,295 tests.
 - Another engineer moved the chat pages onto chat-kit in October.
 
@@ -263,14 +293,17 @@ function useUiElement(name: string) {
 This is your strongest full-stack story. You built it.
 
 **Say this first (~30 sec):**
-> "Our AI turns take 2 to 5 minutes, but the gateway cuts every request at a fixed time, even while data is flowing. So keep-alive pings can't help, and no connection can last a whole turn. I tried plain streaming, then polling a status key. The final design: the turn runs as a background job and writes every event to a Redis log. The client reads it over SSE. Each stream closes on purpose before the limit, and the client resumes from the last event ID. Any replica can serve it."
+> "Our AI turns take 2 to 5 minutes. When I measured it, the gateway cut the stream at 60 seconds flat, even with data flowing. So it was a hard cap, keep-alive pings couldn't help, and no connection could last a whole turn. I tried plain streaming, then polling a status key. The final design: the turn runs as a background job and writes every event to a Redis log. The client reads it over SSE. Each stream closes on purpose before the limit, and the client resumes from the last event ID. Any replica can serve it."
 
 **If they dig deeper:**
 - **Start:** a POST returns the conversation, turn and message IDs at once.
 - **Events:** start, status, delta, part, final, error, reconnect, done. Each has a number that counts up within the turn.
-- **Windows:** a stream closes at **170 seconds**, under the **180-second gateway limit**, with a `reconnect` event. Pings go every 15 seconds. On dev the window is 30 seconds, to force replica handovers.
-  - `[confirm: an early test saw a cut at 61.1 seconds. Before the limit was raised, or another route?]`
-  - `[confirm: Jupiter's Ask AI uses 40-second windows. Why?]`
+- **How you found the limit:** on Aug 28, on dev and stage, you saw the Data Validation chat stream cut at 61.1 seconds with data still flowing. You asked infra to raise it. The design spec says Azure Application Gateway has a fixed total timeout: 60 or 180 seconds, depending on the route.
+- **The window is config, sized per route:**
+  - library default: **40 seconds** (sized for a 45-second gateway in the spec's example). Jupiter still uses it.
+  - Watt's AI services: **170 seconds** since Oct 13, when the gateway got an unbuffered 180-second stream policy.
+  - dev: 30 seconds, to force replica handovers.
+- Each window ends with a `reconnect` event. Pings go every 15 seconds.
 - **Fallbacks:** after 5 failed reconnects, the client polls every 2 seconds. A page refresh or a second tab resumes the running turn.
 - **Stop:** a stop call sets a flag in Redis. The runner stops at its next event, saves the partial answer as stopped, then sends final and done.
 - **Safety:** keys are hashed. Values are encrypted (AES-GCM) when a secret is set. The log expires after 1 hour. A turn with no heartbeat for 30 seconds ends as lost.
@@ -280,7 +313,8 @@ This is your strongest full-stack story. You built it.
 
 **Your angle:** [S1](../AI%20Engineer/13-Behavioral-Story-Bank.md#s1), [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3).
 **Likely follow-ups:**
-- "EventSource can't set an Authorization header. How does the client send the token?" `[confirm: EventSource or fetch streaming?]`
+- "EventSource can't set an Authorization header. How does the client send the token?" → "We stream with fetch, not EventSource, for exactly that reason. The headers (token, gateway key, product) are rebuilt on every request, so the token is always fresh."
+- "How do you check the events?" → "They're parsed as JSON and cast to types generated from the JSON Schemas, with hand-written guards for a few parts like rows, confirm and SQL. A cast isn't a check, so I'd validate against the same schemas at run time."
 - "What if two replicas both run the same turn?"
 - "How do you test it?" (Q12)
 
@@ -293,7 +327,7 @@ This is your strongest full-stack story. You built it.
 **If they dig deeper:**
 - **Date:** Oct 21, 2026. The error was a 503.
 - **Why strict mode exists:** active-active Redis copies data between regions asynchronously, so IDs chosen by clients could clash. Strict mode, the default, rejects full IDs that a client sets ([Redis docs](https://redis.io/docs/latest/operate/rs/databases/active-active/develop/data-types/streams/)).
-- **The fix:** `[confirm: Redis now makes the IDs, and the turn's number moves into the event?]`
+- **The fix:** the library wrote each ID as `n-1`, where n is its own counter for the turn. That's a full ID, which strict mode rejects. Now it writes only `n`, and Redis fills in the second part: the region ID in strict mode, `0` in plain Redis. Reading and resuming use only the counter.
 - **Lesson:** test against the same mode as production, not only a default fake.
 - **Two more bugs you fixed:**
   - A repair step could overwrite a turn that had just finished with an empty answer. You made it re-read the store, and now repair only touches turns still running. It's a check-then-act race.
@@ -322,10 +356,13 @@ This is your strongest full-stack story. You built it.
 
 ### Q14. What would you change if you built it again?  `[P0]`
 **Say this first (~30 sec):**
-> "Three things. First, push permission changes to open tabs. Today they apply on the next reload. Second, let apps use their UI-element lists through a typed hook, and make every data route re-check app access. Third, generate the shell contract types from one schema, the way chat-kit's types are generated, and add contract tests between the shell and the apps."
+> "Three things. First, check app access on every data route, not only the token. Admin routes do it today, data routes don't. Second, validate streamed events against the JSON Schemas we already have. Today the client casts them to the generated types. Third, push permission changes to open tabs. Today they apply on the next reload."
 
 **If they dig deeper:**
 - **Pushing changes:** send an "entitlements changed" event, or refetch on window focus and on the first 403.
+- **Apps using their UI-element lists:** a typed hook (Q5). Today only the shell uses them.
+- **Contract tests** between the shell and the apps, with the contract types generated from one schema.
+- **Safe rollback:** add a pin, so a rollback doesn't depend on deleting a blob the immutability policy may protect. And fix the out-of-date architecture doc (Q3).
 - **Write decisions down:** the docs don't record why we chose `import()` over Module Federation. A one-page decision record would help the next engineer.
 - Pick the one you believe in most. `[fill in: your real answer]`
 
@@ -352,11 +389,11 @@ type Host = {
 
 type AppModule = {
   meta: { contractVersion: 1 };
-  mount(el: HTMLElement, host: Host): void;
+  mount(el: HTMLElement, host: Host): {
+    unmount(): void;
+  };
 };
 ```
-
-`[confirm: does mount return an unmount function?]`
 
 ## References
 - [Story bank: S3 · Watt specs](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3)

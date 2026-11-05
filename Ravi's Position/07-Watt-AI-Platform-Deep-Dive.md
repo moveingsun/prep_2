@@ -177,12 +177,7 @@ async function loadApp(
 - Each app gets **a snapshot of its list** when it mounts.
 - **Honest gap:** no app reads its list yet. Today the shell uses these permissions (Admin tab, super admin, which apps you can manage). Say "the plumbing is there; the apps don't use it yet."
 - **On the server:** every backend checks the token. Admin routes also re-check entitlements, with a 5-minute cache per user. A permission change must be allowed for **every domain** it touches.
-- **What each app checks on its data routes today:**
-  - **Doc Intelligence** filters every search by the user's document access tags. It's behind a switch: on in dev, off in stage. When on, it fails closed.
-  - **Ask Data** queries with the user's own warehouse role (on-behalf-of), so the warehouse enforces access.
-  - **Data Validation** (yours) checks the token and who is calling, but not app access.
-- **The fix:** one middleware that checks the app permission on every data route. Your entitlement checks take ~10 ms, so it's cheap.
-- **How to say it:** call it the next hardening step, not a confession. Don't add more detail about a live gap at your current company than the question needs.
+- **Data routes** check the token, not app access yet. That's the next hardening step.
 - If they ask for code, a typed hook is a clean answer:
 
 ```ts
@@ -193,7 +188,7 @@ function useUiElement(name: string) {
 ```
 
 **Your angle:** [S3](../AI%20Engineer/13-Behavioral-Story-Bank.md#s3), [S9](../AI%20Engineer/13-Behavioral-Story-Bank.md#s9).
-**Likely follow-ups:** "If I have a token but no access to an app, can I call its API?" → "The gateway and backend check the token, and the shell hides apps you can't use. Per-app checks on data routes are the next step; today Ask Data relies on the warehouse role instead." · "How does a change reach a user who is already signed in?" (Q13)
+**Likely follow-ups:** "If I have a token but no access to an app, can I call its API?" → "The gateway and every backend check the token, and the shell hides apps you can't use. Per-app checks on data routes are the next hardening step." · "How does a change reach a user who is already signed in?" (Q13)
 
 ---
 

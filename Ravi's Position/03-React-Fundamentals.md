@@ -1008,9 +1008,53 @@ export const handlers = [
 
 ---
 
+### Q26. What do React, Vite and Tailwind each do? How does the app get to the browser?  `[P1]`
+**Say this first (~15 sec):**
+> "React is the UI library: components and state. Tailwind is how we style them, with utility classes in the markup. Vite is the build tool and dev server that compiles it all for the browser. On Watt we use React 19, Tailwind 4 and Vite 8."
+
+**If they dig deeper:**
+- **Three jobs, used together:**
+
+| Tool | Its job |
+|---|---|
+| **React** | builds the UI: components, state, what to draw. Like FastAPI for your backend code. |
+| **Tailwind** | styles the UI: ready-made CSS classes for colors, spacing and layout |
+| **Vite** | builds and serves the app: turns TS/JSX and CSS into files the browser loads |
+
+- **How they fit:** you write React components in `.tsx`, style them with Tailwind classes (`className="p-4 text-red-600"`), and Vite compiles both into plain JS and CSS. Tailwind runs as a Vite plugin and outputs only the classes you use.
+- **The UI code and the data come from different places:**
+  - The **UI code** (HTML, JS, CSS) downloads once, when the page opens.
+  - The **data** comes from the API, and the browser calls it all the time after that: every PnL view, every Ask AI poll.
+
+```
+Page load (once):
+  browser ──► static files (JS, CSS)
+
+While the user works (many times):
+  browser ──► API (FastAPI) ──► database
+```
+
+- **One exception:** a lazy-loaded chunk downloads later, the first time it's needed. Examples: Vega-Lite on Ask AI, two lazy Jupiter grids, and each Watt app's bundle.
+- **The Vite dev server runs only on your laptop.** `npm run dev` starts it, and the page keeps a WebSocket open to it. When you save a file, Vite tells the browser which file changed. The browser downloads only that file, and React swaps in the new code, often without losing what's on screen. That's **hot module replacement (HMR)**.
+- **In production there's no Vite server.** `vite build` writes plain files to `dist/` once. Something simple serves them: a container for Jupiter, blob storage for Watt's app bundles.
+
+| | Development | Production |
+|---|---|---|
+| **Backend** | `uvicorn --reload` | a plain server |
+| **Frontend** | Vite dev server + HMR | static files from `vite build` |
+
+**Your angle:** Watt is React 19 + Vite 8 + Tailwind 4, and Jupiter is React 19 + Vite 7 + Tailwind 3. AMP is React 18 with Tailwind on **Create React App**, the older build tool the React team deprecated in Feb 2025. Moving AMP to Vite is a good "what would you improve?" answer.
+**Likely follow-ups:**
+- *"How does the app know its API URL in each environment?"* → Vite bakes `import.meta.env.VITE_*` values into the files at build time, so one build would need one URL. Jupiter's container writes a runtime config file at startup instead, so the same image runs in every environment. Also: anything with the `VITE_` prefix ends up in the browser, so never put a secret there. You fixed a real version of this: Datadog agent variables, including an API key, used to reach Jupiter's browser code ([05](05-Frontend-System-Design.md)).
+- *"What's in `dist/`?"* → an `index.html`, plus JS and CSS files with a content hash in their names, so they can be cached for a long time.
+
+---
+
 ## References
 - [React Versions](https://react.dev/versions): the official list; confirms 19.3 is the latest.
 - [Tailwind: detecting classes in source files](https://tailwindcss.com/docs/detecting-classes-in-source-files): why dynamic class names don't work (Q25).
+- [Vite: building for production](https://vite.dev/guide/build) and [Vite: env variables and modes](https://vite.dev/guide/env-and-mode): `dist/`, and why `VITE_` values are baked in at build time and reach the browser (Q26).
+- [Tailwind: installing with Vite](https://tailwindcss.com/docs/installation/using-vite): Tailwind as a Vite plugin (Q26).
 - [React 19.3 release post](https://react.dev/blog/2026/09/09/react-19-3): View Transitions, Fragment refs, `browser()`, Trusted Types.
 - [React 19.2 release post](https://react.dev/blog/2025/10/01/react-19-2): Activity, useEffectEvent, Performance Tracks, Partial Pre-rendering.
 - [React v19 release post](https://react.dev/blog/2024/12/05/react-19): Actions, new hooks, ref as a prop, removed APIs.
